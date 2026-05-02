@@ -10,6 +10,7 @@ import { Logo } from "@/components/Logo";
 import { setStoredName } from "@/lib/meeting";
 import { toast } from "sonner";
 import { Loader2, ArrowRight } from "lucide-react";
+import { Loader } from "@/components/Loader";
 
 const searchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
@@ -43,6 +44,8 @@ function AuthPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [show2fa, setShow2fa] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // Already signed in → bounce to redirect target or dashboard
@@ -86,7 +89,7 @@ function AuthPage() {
           return;
         }
         setBusy(true);
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
           password: parsed.data.password,
         });
@@ -94,8 +97,58 @@ function AuthPage() {
           toast.error(error.message);
           return;
         }
-        toast.success("Welcome back");
+
+        // Check if 2FA is enabled for this user
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("mfa_enabled")
+          .eq("user_id", authUser?.id)
+          .single();
+
+        if (prof?.mfa_enabled) {
+          // Trigger OTP and switch to 2FA view
+          await supabase.auth.signOut();
+          const { error: otpErr } = await supabase.auth.signInWithOtp({ email: parsed.data.email });
+          if (otpErr) throw otpErr;
+          
+          setShow2fa(true);
+          toast.info("Security verification required", {
+            description: "A 6-digit code has been sent to your email."
+          });
+        } else {
+          toast.success("Welcome back");
+        }
       }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Authentication failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode || busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode,
+        type: 'signup' // or 'signin' - Supabase uses 'signup' for email OTP often but 'magiclink' works too
+      });
+      if (error) {
+        // Try magiclink type if signup fails
+        const { error: err2 } = await supabase.auth.verifyOtp({
+          email,
+          token: otpCode,
+          type: 'magiclink'
+        });
+        if (err2) throw err2;
+      }
+      toast.success("Identity verified");
+      navigate({ to: search.redirect ?? "/dashboard" });
+    } catch (e) {
+      toast.error("Invalid or expired verification code");
     } finally {
       setBusy(false);
     }
@@ -207,55 +260,87 @@ function AuthPage() {
               <div className="flex-grow border-t border-glass-border" />
             </div>
 
-            <form onSubmit={submit} className="space-y-4">
-              {mode === "signup" && (
+            {show2fa ? (
+              <form onSubmit={verifyOtp} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="dn" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Display Name</Label>
+                  <Label htmlFor="otp" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Verification Code</Label>
                   <Input
-                    id="dn"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Maya Chen"
+                    id="otp"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="123456"
+                    className="bg-card/40 border-glass-border h-12 rounded-xl text-center font-mono text-xl tracking-[0.5em] focus:ring-primary/20"
+                    maxLength={6}
+                    autoFocus
+                  />
+                  <p className="text-[10px] text-muted-foreground text-center mt-2">Enter the code sent to <span className="font-bold text-foreground">{email}</span></p>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={busy || otpCode.length < 6}
+                  className="w-full h-12 bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-95 rounded-xl font-bold text-base mt-2"
+                >
+                  {busy ? <Loader variant="inline" /> : "Verify & Sign In"}
+                </Button>
+                <button 
+                  type="button" 
+                  onClick={() => setShow2fa(false)}
+                  className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Back to Sign In
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={submit} className="space-y-4">
+                {mode === "signup" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="dn" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Display Name</Label>
+                    <Input
+                      id="dn"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Maya Chen"
+                      className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="em" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Email Address</Label>
+                  <Input
+                    id="em"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
                     className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
                   />
                 </div>
-              )}
-              <div className="space-y-1.5">
-                <Label htmlFor="em" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Email Address</Label>
-                <Input
-                  id="em"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between ml-1">
-                  <Label htmlFor="pw" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Password</Label>
-                  {mode === "signin" && <button type="button" className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between ml-1">
+                    <Label htmlFor="pw" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Password</Label>
+                    {mode === "signin" && <button type="button" className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
+                  </div>
+                  <Input
+                    id="pw"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
+                  />
                 </div>
-                <Input
-                  id="pw"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
-                />
-              </div>
 
-              <Button
-                type="submit"
-                disabled={busy}
-                className="w-full h-12 bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-95 rounded-xl font-bold text-base mt-2"
-              >
-                {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                  <>{mode === "signup" ? "Create Account" : "Sign In"}</>
-                )}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full h-12 bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-95 rounded-xl font-bold text-base mt-2"
+                >
+                  {busy ? <Loader variant="inline" /> : (
+                    <>{mode === "signup" ? "Create Account" : "Sign In"}</>
+                  )}
+                </Button>
+              </form>
+            )}
           </div>
 
           <p className="text-sm text-center text-muted-foreground">

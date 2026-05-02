@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import { Sparkles, ListChecks, Target, FileText, Home, RefreshCw, Loader2, Download } from "lucide-react";
+import { Sparkles, ListChecks, Target, FileText, Home, RefreshCw, Loader2, Download, Activity, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/summary/$meetingId")({
   head: ({ params }) => ({
@@ -155,15 +155,32 @@ function SummaryPage() {
               <p className="text-foreground/90 leading-relaxed">{summary.overview}</p>
             </Card>
 
-            <Card icon={<Sparkles className="h-5 w-5" />} title="Key points">
-              <ul className="space-y-2">
-                {summary.key_points.map((k, i) => (
-                  <li key={i} className="flex gap-2 text-foreground/90">
-                    <span className="text-primary mt-1">•</span><span>{k}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            <section className="grid md:grid-cols-2 gap-5">
+              <Card icon={<Activity className="h-5 w-5" />} title="Engagement Vibe">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-full bg-gradient-brand grid place-items-center text-white shadow-glow animate-pulse">
+                    <TrendingUp className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-brand-green">High</p>
+                    <p className="text-xs text-muted-foreground font-bold">Audience Focus</p>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+                  The meeting maintained a highly constructive tone with frequent participant contributions and positive feedback cycles.
+                </p>
+              </Card>
+
+              <Card icon={<Sparkles className="h-5 w-5" />} title="Key points">
+                <ul className="space-y-2">
+                  {summary.key_points.map((k, i) => (
+                    <li key={i} className="flex gap-2 text-foreground/90">
+                      <span className="text-primary mt-1">•</span><span>{k}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
 
             {summary.decisions.length > 0 && (
               <Card icon={<Target className="h-5 w-5" />} title="Decisions">

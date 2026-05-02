@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Users, Plus, Trash2, ArrowRight, DoorOpen } from "lucide-react";
 import { toast } from "sonner";
 
+import { uuidv4 } from "@/lib/meeting";
+
 type BreakoutRoom = { id: string; name: string; capacity: number };
 
 type Props = {
@@ -17,7 +19,7 @@ export function BreakoutPanel({ rooms, onUpdate, isHost }: Props) {
 
   const addRoom = () => {
     if (!roomName.trim()) return;
-    onUpdate([...rooms, { id: crypto.randomUUID(), name: roomName.trim(), capacity: 0 }]);
+    onUpdate([...rooms, { id: uuidv4(), name: roomName.trim(), capacity: 0 }]);
     setRoomName("");
     toast.success(`Breakout room "${roomName}" created.`);
   };
@@ -35,7 +37,7 @@ export function BreakoutPanel({ rooms, onUpdate, isHost }: Props) {
       <div className="p-4 border-b border-glass-border">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <DoorOpen className="h-4 w-4 text-primary" />
-          Breakout Rooms
+          Breakout rooms
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
           Divide participants into smaller groups for focused discussion.
@@ -93,7 +95,7 @@ export function BreakoutPanel({ rooms, onUpdate, isHost }: Props) {
             disabled={rooms.length === 0}
             onClick={startBreakout}
           >
-            Start Breakout Session
+            Start breakout session
           </Button>
         </div>
       )}

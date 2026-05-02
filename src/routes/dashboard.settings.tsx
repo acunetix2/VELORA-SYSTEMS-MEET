@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import {
   Mic, Video as VideoIcon, Bell, Eye, ChevronRight,
   Globe, Volume2, Monitor, Shield, Zap,
-  Smartphone, Keyboard
+  Smartphone, Keyboard, CheckCircle2, RefreshCw, Copy, QrCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 
 function SettingsComponent() {
   return (
@@ -34,6 +37,10 @@ type Prefs = {
   noiseSuppression: boolean;
   autoGain: boolean;
   uiDensity: 'comfortable' | 'compact';
+  meetingMode: 'private' | 'open';
+  mediaRegion: string;
+  notifyUpcoming: boolean;
+  notifyRecording: boolean;
 };
 
 const KEY = "velora:prefs";
@@ -45,12 +52,26 @@ const DEFAULTS: Prefs = {
   hdEnabled: true,
   noiseSuppression: true,
   autoGain: true,
-  uiDensity: 'comfortable'
+  uiDensity: 'comfortable',
+  meetingMode: 'private',
+  mediaRegion: 'auto',
+  notifyUpcoming: true,
+  notifyRecording: true,
 };
 
+const REGIONS = [
+  { value: 'auto', label: 'Auto (Nearest)' },
+  { value: 'us-east', label: 'US East' },
+  { value: 'eu-west', label: 'EU West' },
+  { value: 'ap-south', label: 'AP South' },
+  { value: 'af-south', label: 'Africa South' },
+];
+
 function Page() {
+  const { profile } = useProfile();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
-  const [devices, setDevices] = useState<{ audio: string; video: string }>({ audio: 'Default', video: 'Default' });
+  const [pairCode, setPairCode] = useState<string | null>(null);
+  const [pairLoading, setPairLoading] = useState(false);
 
   useEffect(() => {
     try { setPrefs({ ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }); } catch { /* noop */ }
@@ -63,12 +84,61 @@ function Page() {
     toast.success("Settings updated", { duration: 1000 });
   };
 
+  const generatePairCode = async () => {
+    setPairLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Not signed in"); return; }
+      
+      const token = Math.random().toString(36).slice(2, 10).toUpperCase();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      
+      const { error } = await supabase
+        .from("device_pairing" as any)
+        .insert({
+          user_id: user.id,
+          pair_code: token,
+          expires_at: expiresAt
+        });
+
+      if (error) throw error;
+      
+      setPairCode(token);
+      toast.success("Pair code generated — valid for 10 minutes");
+    } catch (e) {
+      toast.error("Failed to generate pair code");
+      console.error(e);
+    } finally {
+      setPairLoading(false);
+    }
+  };
+
+  const copyPairCode = () => {
+    if (pairCode) navigator.clipboard.writeText(pairCode).then(() => toast.success("Code copied"));
+  };
+
+  const clearAll = () => {
+    localStorage.removeItem(KEY);
+    setPrefs(DEFAULTS);
+    toast.success("Settings reset to defaults");
+  };
+
+  const notifyPermsGranted = typeof Notification !== "undefined" && Notification.permission === "granted";
+
+  const requestNotifPerms = async () => {
+    if (typeof Notification === "undefined") { toast.error("Notifications not supported in this browser"); return; }
+    const result = await Notification.requestPermission();
+    if (result === "granted") toast.success("Notifications enabled!");
+    else toast.error("Notification permission denied");
+  };
+
   return (
     <DashboardShell title="Settings">
       <div className="px-4 sm:px-6 py-8 max-w-4xl mx-auto space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Audio & Video */}
+          {/* Left column */}
           <div className="space-y-6">
+            {/* Audio & Video */}
             <Card title="Audio & Video" icon={<Mic className="h-4 w-4" />}>
               <Row label="Join meetings muted" sub="Microphone off until you turn it on." checked={prefs.joinMuted} onChange={(v) => set("joinMuted", v)} />
               <Row label="Join with camera off" sub="Start in audio-only mode." checked={prefs.joinCameraOff} onChange={(v) => set("joinCameraOff", v)} />
@@ -76,74 +146,132 @@ function Page() {
               <Row label="HD Video (1080p)" sub="Enable high-definition stream quality." checked={prefs.hdEnabled} onChange={(v) => set("hdEnabled", v)} />
             </Card>
 
+            {/* Smart Audio */}
             <Card title="Smart Audio" icon={<Volume2 className="h-4 w-4" />}>
               <Row label="Noise Suppression" sub="Filter out background typing and fan noise." checked={prefs.noiseSuppression} onChange={(v) => set("noiseSuppression", v)} />
               <Row label="Auto Gain Control" sub="Normalize your volume automatically." checked={prefs.autoGain} onChange={(v) => set("autoGain", v)} />
             </Card>
 
-            <Card title="Shortcuts" icon={<Keyboard className="h-4 w-4" />}>
-              <div className="p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Mute / Unmute</span>
-                  <kbd className="px-1.5 py-0.5 rounded border border-glass-border bg-muted font-mono">Ctrl + D</kbd>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Camera On / Off</span>
-                  <kbd className="px-1.5 py-0.5 rounded border border-glass-border bg-muted font-mono">Ctrl + E</kbd>
-                </div>
+            {/* Notifications */}
+            <Card title="Notifications" icon={<Bell className="h-4 w-4" />}>
+              <Row label="Notify on knocks" sub="Sound alert when someone joins lobby." checked={prefs.notifyKnocks} onChange={(v) => set("notifyKnocks", v)} />
+              <Row label="Upcoming meeting alerts" sub="Notify 5 minutes before a scheduled meeting." checked={prefs.notifyUpcoming} onChange={(v) => set("notifyUpcoming", v)} />
+              <Row label="Recording alerts" sub="Notify me when recording starts/stops." checked={prefs.notifyRecording} onChange={(v) => set("notifyRecording", v)} />
+              <div className="p-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl gap-2 font-bold"
+                  onClick={requestNotifPerms}
+                >
+                  {notifyPermsGranted ? (
+                    <><CheckCircle2 className="h-4 w-4 text-green-500" /> Browser notifications active</>
+                  ) : (
+                    <><Bell className="h-4 w-4" /> Enable browser notifications</>
+                  )}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Shortcuts */}
+            <Card title="Keyboard Shortcuts" icon={<Keyboard className="h-4 w-4" />}>
+              <div className="p-4 space-y-3">
+                {[
+                  ["Mute / Unmute", "Ctrl + D"],
+                  ["Camera On / Off", "Ctrl + E"],
+                  ["Push to talk", "Space (hold)"],
+                  ["Toggle chat", "Ctrl + /"],
+                ].map(([action, key]) => (
+                  <div key={action} className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{action}</span>
+                    <kbd className="px-1.5 py-0.5 rounded border border-glass-border bg-muted font-mono">{key}</kbd>
+                  </div>
+                ))}
               </div>
             </Card>
           </div>
 
-          {/* Appearance & Workspace */}
+          {/* Right column */}
           <div className="space-y-6">
+            {/* Appearance */}
             <Card title="Workspace Appearance" icon={<Monitor className="h-4 w-4" />}>
-              <div className="p-3">
+              <div className="p-4">
                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 block">UI Density</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => set("uiDensity", 'comfortable')}
-                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${prefs.uiDensity === 'comfortable' ? 'border-primary bg-primary/10 shadow-glow text-primary' : 'border-glass-border bg-card/30 hover:bg-card/50 text-muted-foreground'}`}
-                  >
-                    Comfortable
-                  </button>
-                  <button
-                    onClick={() => set("uiDensity", 'compact')}
-                    className={`p-3 rounded-xl border text-sm font-medium transition-all ${prefs.uiDensity === 'compact' ? 'border-primary bg-primary/10 shadow-glow text-primary' : 'border-glass-border bg-card/30 hover:bg-card/50 text-muted-foreground'}`}
-                  >
-                    Compact
-                  </button>
+                  {(['comfortable', 'compact'] as const).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => set("uiDensity", d)}
+                      className={`p-3 rounded-xl border text-sm font-medium capitalize transition-all ${prefs.uiDensity === d ? 'border-primary bg-primary/10 shadow-glow text-primary' : 'border-glass-border bg-card/30 hover:bg-card/50 text-muted-foreground'}`}
+                    >
+                      {d}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <Row label="Notify me of knocks" sub="Sound alert when someone joins lobby." checked={prefs.notifyKnocks} onChange={(v) => set("notifyKnocks", v)} />
             </Card>
 
+            {/* Security & Region */}
             <Card title="Security & Region" icon={<Shield className="h-4 w-4" />}>
-              <div className="p-3 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Default Meeting Mode</p>
-                    <p className="text-xs text-muted-foreground">Current: <b>Private (Waiting Room)</b></p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-primary">Change</Button>
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Default Meeting Mode</Label>
+                  <Select value={prefs.meetingMode} onValueChange={(v) => set("meetingMode", v as Prefs['meetingMode'])}>
+                    <SelectTrigger className="h-10 rounded-xl bg-card/40 border-glass-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      <SelectItem value="private">Private (Waiting Room)</SelectItem>
+                      <SelectItem value="open">Open (Instant Join)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Media Region</p>
-                    <p className="text-xs text-muted-foreground">Current: <b>Auto (US East)</b></p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-primary">Change</Button>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Media Region</Label>
+                  <Select value={prefs.mediaRegion} onValueChange={(v) => set("mediaRegion", v)}>
+                    <SelectTrigger className="h-10 rounded-xl bg-card/40 border-glass-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {REGIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </Card>
 
+            {/* Mobile Sync */}
             <Card title="Mobile Sync" icon={<Smartphone className="h-4 w-4" />}>
-              <div className="p-3 text-center">
-                <div className="h-24 w-24 bg-muted/30 rounded-2xl mx-auto mb-4 border border-dashed border-glass-border grid place-items-center">
-                  <Zap className="h-8 w-8 text-muted-foreground/30" />
-                </div>
-                <p className="text-xs text-muted-foreground">Scan QR to pair your mobile device for remote control and second screen.</p>
-                <Button variant="outline" className="mt-4 w-full rounded-xl h-10 text-xs font-bold">Generate Pair Code</Button>
+              <div className="p-4 space-y-4">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Generate a pairing code to link your mobile browser. Open Velora on your phone and enter the code in <b>Profile → Pair Device</b>.
+                </p>
+                {pairCode ? (
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-center">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Your pairing code</p>
+                      <p className="text-4xl font-black tracking-[0.3em] text-primary">{pairCode}</p>
+                      <p className="text-[10px] text-muted-foreground mt-2">Valid for 10 minutes</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" size="sm" className="rounded-xl gap-2 font-bold" onClick={copyPairCode}>
+                        <Copy className="h-4 w-4" /> Copy Code
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-xl gap-2 font-bold" onClick={() => setPairCode(null)}>
+                        <RefreshCw className="h-4 w-4" /> New Code
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full rounded-xl h-11 gap-2 font-bold bg-gradient-primary text-primary-foreground border-0 shadow-glow"
+                    onClick={generatePairCode}
+                    disabled={pairLoading}
+                  >
+                    <QrCode className="h-4 w-4" />
+                    {pairLoading ? "Generating…" : "Generate Pair Code"}
+                  </Button>
+                )}
               </div>
             </Card>
           </div>
@@ -151,10 +279,10 @@ function Page() {
 
         <div className="pt-8 border-t border-glass-border flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
-            Velora Meet Client v2.4.1 (Stable Build)
+            Velora Meet v2.4.1 · {profile?.email ?? ""}
           </div>
-          <Button variant="destructive" size="sm" className="rounded-xl h-9 px-4 text-xs font-bold" onClick={() => toast.error("Reset initiated", { description: "Factory reset will clear all local storage preferences." })}>
-            Factory Reset
+          <Button variant="destructive" size="sm" className="rounded-xl h-9 px-4 text-xs font-bold" onClick={clearAll}>
+            Reset to Defaults
           </Button>
         </div>
       </div>

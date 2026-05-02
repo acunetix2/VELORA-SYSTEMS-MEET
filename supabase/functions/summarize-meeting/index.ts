@@ -18,103 +18,59 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI is not configured." }), {
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      return new Response(JSON.stringify({ error: "AI is not configured (missing GROQ_API_KEY)." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const trimmed = transcript.slice(0, 16000);
+    const trimmed = transcript.slice(0, 32000); // Llama has a larger context window
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
             content:
-              "You are a concise meeting summarizer. Given a raw transcript, produce structured output via the tool call. Be specific, factual, and brief. Use the speaker labels when available.",
+              "You are a concise meeting summarizer. Given a raw transcript, produce structured JSON output. Be specific, factual, and brief. Return ONLY valid JSON that matches the requested schema.",
           },
           {
             role: "user",
-            content: `Meeting ID: ${meetingId ?? "unknown"}\n\nTranscript:\n${trimmed}`,
+            content: `Meeting ID: ${meetingId ?? "unknown"}\n\nTranscript:\n${trimmed}\n\nReturn JSON with: title, overview, key_points (array), decisions (array), action_items (array of {task, owner})`,
           },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "submit_summary",
-              description: "Return the structured meeting summary.",
-              parameters: {
-                type: "object",
-                properties: {
-                  title: { type: "string", description: "A short, specific meeting title (max 8 words)." },
-                  overview: { type: "string", description: "2-3 sentence overview of what was discussed." },
-                  key_points: { type: "array", items: { type: "string" }, description: "3-6 key discussion points." },
-                  decisions: { type: "array", items: { type: "string" }, description: "Decisions made (may be empty)." },
-                  action_items: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        task: { type: "string" },
-                        owner: { type: "string", description: "Person responsible, or 'Unassigned'." },
-                      },
-                      required: ["task", "owner"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["title", "overview", "key_points", "decisions", "action_items"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "submit_summary" } },
+        response_format: { type: "json_object" }
       }),
     });
 
-    if (response.status === 429) {
-      return new Response(JSON.stringify({ error: "AI rate limit reached. Try again in a moment." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (response.status === 402) {
-      return new Response(JSON.stringify({ error: "AI credits exhausted. Add funds in Lovable AI workspace." }), {
-        status: 402,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     if (!response.ok) {
       const t = await response.text();
-      console.error("AI gateway error", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      console.error("Groq gateway error", response.status, t);
+      return new Response(JSON.stringify({ error: `Groq error: ${response.status}` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
-    const call = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call) {
-      return new Response(JSON.stringify({ error: "No structured response returned." }), {
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      return new Response(JSON.stringify({ error: "No response returned from AI." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const args = JSON.parse(call.function.arguments);
-    return new Response(JSON.stringify({ summary: args }), {
+    const summary = JSON.parse(content);
+    return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

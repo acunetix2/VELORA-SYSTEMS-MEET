@@ -1,3 +1,17 @@
+/**
+ * Cross-browser UUID v4 — falls back to Math.random when
+ * crypto.randomUUID is unavailable (iOS Safari < 15.4, some Android WebViews).
+ */
+export function uuidv4(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 // Generate a friendly meeting code: xxx-yyyy-zzz
 export function generateMeetingId(): string {
   const chars = "abcdefghijkmnpqrstuvwxyz";

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { uuidv4 } from "@/lib/meeting";
 
 export type RemotePeer = {
   id: string;
@@ -95,7 +96,7 @@ export function useWebRTC({ meetingId, identity, privacy: initialPrivacy, isCrea
   const [quality, setQuality] = useState<ConnectionQuality>("unknown");
   const [lowBandwidth, setLowBandwidth] = useState(false);
 
-  const selfIdRef = useRef<string>(crypto.randomUUID());
+  const selfIdRef = useRef<string>(uuidv4());
   const isHostRef = useRef<boolean>(isCreator);
   const pcsRef = useRef<Record<string, RTCPeerConnection>>({});
   const channelRef = useRef<RealtimeChannel | null>(null);

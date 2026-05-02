@@ -14,10 +14,14 @@ import {
 import {
   Home, Calendar, Users2, History, Video, Settings, Building2,
   GraduationCap, HelpCircle, Menu, X, LogOut, UserCircle2, PanelLeftClose, PanelLeft,
+  Info, Code2, ChevronDown, ChevronUp, HeartHandshake
 } from "lucide-react";
-import { Bell, Search, Sparkles, Command } from "lucide-react";
+import { Bell, Search, Sparkles, Command, MoreHorizontal, MessageCircle, Headphones, BrainCircuit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { NotificationsPopover } from "./NotificationsPopover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AiAssistant } from "./AiAssistant";
+import { EllaIcon } from "@/components/EllaIcon";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string };
 
@@ -28,14 +32,16 @@ const NAV: NavItem[] = [
   { to: "/dashboard/recordings", label: "Recordings", icon: History },
   { to: "/dashboard/classroom", label: "Classroom", icon: GraduationCap },
   { to: "/dashboard/contacts", label: "Contacts", icon: Users2 },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-const SECONDARY: NavItem[] = [
+const MORE: NavItem[] = [
+  { to: "/dashboard/partners", label: "Partners", icon: HeartHandshake },
   { to: "/dashboard/enterprise", label: "Enterprise", icon: Building2 },
   { to: "/dashboard/academy", label: "Academy", icon: GraduationCap },
   { to: "/dashboard/faq", label: "Help & FAQ", icon: HelpCircle },
 ];
+
+const SECONDARY: NavItem[] = []; // Now empty as they are in MORE
 
 export function DashboardShell({ children, title, actions }: {
   children: React.ReactNode;
@@ -49,6 +55,8 @@ export function DashboardShell({ children, title, actions }: {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [moreExpanded, setMoreExpanded] = useState(false);
 
   const name = profile?.display_name || getDisplayName(user);
   const isActive = (path: string) =>
@@ -87,10 +95,59 @@ export function DashboardShell({ children, title, actions }: {
           {NAV.map((item) => (
             <SidebarLink key={item.to} item={item} active={isActive(item.to)} collapsed={collapsed} />
           ))}
+          
+          <div className="px-3 py-2 mt-4 mb-1">
+            <span className={`text-[11px] font-bold text-muted-foreground/60 ${collapsed ? "hidden" : "block"}`}>
+              Management
+            </span>
+            {collapsed && <div className="h-px bg-glass-border/40 w-full" />}
+          </div>
+
+          <div className="space-y-0.5">
+            <button 
+              onClick={() => !collapsed && setMoreExpanded(!moreExpanded)}
+              className={`w-full flex items-center gap-2 p-2 rounded-xl text-sm font-medium transition-smooth hover:bg-card/60 text-muted-foreground hover:text-foreground ${collapsed ? "justify-center" : ""}`}
+            >
+              <MoreHorizontal className="h-4 w-4 shrink-0" />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">More options</span>
+                  {moreExpanded ? <ChevronUp className="h-3 w-3 opacity-50" /> : <ChevronDown className="h-3 w-3 opacity-50" />}
+                </>
+              )}
+            </button>
+            
+            {moreExpanded && !collapsed && (
+              <div className="pl-4 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
+                {MORE.map((item) => (
+                  <SidebarLink key={item.to} item={item} active={isActive(item.to)} collapsed={false} />
+                ))}
+              </div>
+            )}
+            
+            {collapsed && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full flex justify-center p-2 rounded-xl hover:bg-card/60 text-muted-foreground">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="glass border-glass-border p-1 w-52 shadow-brand">
+                  {MORE.map((item) => (
+                    <DropdownMenuItem key={item.to} asChild className="rounded-lg">
+                      <Link to={item.to} className="flex items-center gap-2 w-full cursor-pointer h-10 px-3 font-medium">
+                        <item.icon className="h-4 w-4 text-primary" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
           <div className="my-3 border-t border-glass-border/60" />
-          {SECONDARY.map((item) => (
-            <SidebarLink key={item.to} item={item} active={isActive(item.to)} collapsed={collapsed} />
-          ))}
+          {/* Secondary nav is now empty, but keeping the logic in case of future additions */}
         </nav>
 
         {/* Profile footer */}
@@ -123,10 +180,14 @@ export function DashboardShell({ children, title, actions }: {
               {NAV.map((item) => (
                 <SidebarLink key={item.to} item={item} active={isActive(item.to)} collapsed={false} onClick={() => setMobileOpen(false)} />
               ))}
-              <div className="my-3 border-t border-glass-border/60" />
-              {SECONDARY.map((item) => (
+              <div className="px-3 py-2 mt-4 mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                Management
+              </div>
+              {MORE.map((item) => (
                 <SidebarLink key={item.to} item={item} active={isActive(item.to)} collapsed={false} onClick={() => setMobileOpen(false)} />
               ))}
+              <div className="my-3 border-t border-glass-border/60" />
+              {/* Secondary items also moved to MORE in mobile for consistency */}
             </nav>
           </aside>
         </div>
@@ -158,12 +219,7 @@ export function DashboardShell({ children, title, actions }: {
 
             <div className="flex items-center gap-1 sm:gap-2">
               {actions}
-              <button className="hidden sm:grid h-9 w-9 place-items-center rounded-xl hover:bg-card/60 text-muted-foreground hover:text-foreground transition-all" title="Velora AI Assistant">
-                <Sparkles className="h-4 w-4" />
-              </button>
-              
               <NotificationsPopover />
-
               <ThemeToggle />
               
               <div className="h-6 w-[1px] bg-glass-border mx-1 hidden sm:block" />
@@ -185,6 +241,12 @@ export function DashboardShell({ children, title, actions }: {
                   <DropdownMenuItem onClick={() => navigate({ to: "/dashboard/settings" })}>
                     <Settings className="h-4 w-4 mr-2" /> Settings
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/dashboard/about" })}>
+                    <Info className="h-4 w-4 mr-2" /> About Velora
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/dashboard/developer" })}>
+                    <Code2 className="h-4 w-4 mr-2" /> Developer
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setSignOutOpen(true)}>
                     <LogOut className="h-4 w-4 mr-2" /> Sign out
@@ -197,6 +259,27 @@ export function DashboardShell({ children, title, actions }: {
 
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+
+      {/* Floating Help Button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button 
+              className="fixed bottom-6 right-6 h-14 w-14 rounded-2xl glass border-glass-border shadow-brand ring-4 ring-background hover:scale-110 active:scale-95 transition-all duration-300 grid place-items-center z-50 group"
+              onClick={() => setAiOpen(true)}
+            >
+              <div className="h-8 w-8 group-hover:rotate-12 transition-transform">
+                <EllaIcon />
+              </div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="glass border-glass-border py-1 px-2 mr-2 font-bold text-[10px] shadow-brand uppercase tracking-widest">
+            Velora AI
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <AiAssistant open={aiOpen} onOpenChange={setAiOpen} />
 
       <SignOutDialog open={signOutOpen} onOpenChange={setSignOutOpen} />
     </div>

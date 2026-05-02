@@ -1,17 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "@tanstack/react-router";
-import {
-  Video, MonitorUp, MessagesSquare, ShieldCheck, Zap, Lock,
+import { useState } from "react";
+import { AiAssistant } from "@/components/dashboard/AiAssistant";
+import { 
+  BrainCircuit, Video, MonitorUp, MessagesSquare, ShieldCheck, Zap, Lock,
   ArrowRight, MousePointerClick, Link2, Users, Mic, Globe2,
   Captions, Pin, Activity, Cloud, Calendar, Smartphone,
   Sparkles, KeyRound, Sliders, Building2, GraduationCap, Stethoscope,
   Headphones, CheckCircle2, Star, Twitter, Linkedin, Github, Instagram,
-  Facebook, Mail, MapPin, Phone, ExternalLink,
+  Facebook, Mail, MapPin, Phone, ExternalLink 
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,9 +29,11 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const { user } = useAuth();
+  
   // Logged-in users always go straight to the dashboard.
   if (user) return <Navigate to="/dashboard" />;
   const ctaTo = user ? "/dashboard" : "/auth";
+  
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -439,8 +443,8 @@ function Landing() {
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
+                <li><Link to="/terms" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Security</a></li>
               </ul>
             </div>

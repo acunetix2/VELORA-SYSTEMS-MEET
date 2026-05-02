@@ -28,17 +28,15 @@ import {
   Lock,
   Globe2,
   Sparkles,
-  Calendar,
-  Clock,
-  Copy,
   ChevronRight,
-  TrendingUp,
-  Activity,
-  Zap,
-  Users2,
-  Check,
   Building2,
   GraduationCap,
+  Users,
+  Clock,
+  Calendar,
+  Activity,
+  Zap,
+  HeartHandshake,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -107,7 +105,7 @@ function DashboardInner() {
     navigate({
       to: "/meet/$meetingId",
       params: { meetingId: id },
-      search: { mode: privacy, host: 1 },
+      search: { mode: privacy },
     });
   };
 
@@ -157,7 +155,7 @@ function DashboardInner() {
       <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
         {/* Hero greeting */}
         <section className="mb-6">
-          <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold">{today}</p>
+          <p className="text-xs text-muted-foreground font-bold">{today}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight leading-tight">
             Velora <span className="text-primary italic">Meet</span>
           </h2>
@@ -167,114 +165,53 @@ function DashboardInner() {
             <span className="text-sm">Ready for your next session?</span>
           </div>
         </section>
-
-        {/* Dynamic Analytics Strip */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Stat
-            icon={<Video className="h-5 w-5" />}
-            label="Hosted Rooms"
-            value={String(analytics.hostCount)}
-            hint="sessions organized"
-            color="text-primary"
-            bg="bg-primary/10"
-          />
-          <Stat
-            icon={<Users2 className="h-5 w-5" />}
-            label="Total Attended"
-            value={String(analytics.participantCount)}
-            hint="meetings joined"
-            color="text-blue-500"
-            bg="bg-blue-500/10"
-          />
-          <Stat
-            icon={<Activity className="h-5 w-5" />}
-            label="Focus Score"
-            value="92%"
-            hint="meeting engagement"
-            color="text-rose-500"
-            bg="bg-rose-500/10"
-          />
-          <Stat
-            icon={<Zap className="h-5 w-5" />}
-            label="Velocity"
-            value="4.2h"
-            hint="avg weekly time"
-            color="text-amber-500"
-            bg="bg-amber-500/10"
-          />
-        </section>
-
-        {/* Productivity & Goals */}
-        <section className="mb-8 grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass rounded-3xl p-6 border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Productivity Trends
-              </h3>
-              <div className="flex gap-1">
-                {["D", "W", "M"].map(t => (
-                  <button key={t} className={`h-7 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${t === 'W' ? 'bg-primary text-white shadow-glow' : 'glass text-muted-foreground hover:text-foreground'}`}>
-                    {t}
-                  </button>
-                ))}
+        <section className="grid md:grid-cols-2 gap-5 mb-8">
+          {/* Enterprise Spotlight */}
+          <div className="glass rounded-3xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                <Building2 className="h-5 w-5" />
               </div>
+              <h3 className="font-bold text-lg">Organization hub</h3>
             </div>
-            
-            <div className="h-48 w-full flex items-end gap-2 pb-2">
-              {trends.map((h, i) => (
-                <div key={i} className="group relative flex-1">
-                  <div 
-                    className="w-full bg-primary/20 rounded-t-lg transition-all hover:bg-primary cursor-pointer" 
-                    style={{ height: `${Math.max(h, 5)}%` }}
-                  />
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    <div className="glass px-2 py-1 rounded text-[10px] font-bold shadow-xl border-primary/20">
-                      {Math.round((h/100) * 10)} sessions
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 px-1">
-              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
-                <span key={d} className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{d}</span>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Manage your organization's security and team collaboration.
+            </p>
+            <Button asChild className="mt-auto bg-primary hover:bg-primary/90 text-white rounded-xl shadow-glow">
+              <Link to="/dashboard/organization">Manage organization <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            </Button>
           </div>
 
-          <div className="space-y-6">
-            {/* Enterprise Spotlight */}
-            <div className="glass rounded-3xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <h3 className="font-bold text-lg">Enterprise Management</h3>
+          {/* Academy Spotlight */}
+          <div className="glass rounded-3xl p-6 border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 grid place-items-center">
+                <GraduationCap className="h-5 w-5" />
               </div>
-              <p className="text-sm text-muted-foreground mb-6">
-                Manage your organization's security, administrative controls, and team collaboration settings from one place.
-              </p>
-              <Button asChild className="mt-auto bg-primary hover:bg-primary/90 text-white rounded-xl shadow-glow">
-                <Link to="/dashboard/enterprise">Admin Dashboard <ArrowRight className="h-4 w-4 ml-2" /></Link>
-              </Button>
+              <h3 className="font-bold text-lg">Velora Academy</h3>
             </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Master advanced features and hybrid meeting strategies with Iddy Chesire.
+            </p>
+            <Button asChild variant="outline" className="mt-auto border-amber-500/30 hover:bg-amber-500/5 hover:text-amber-500 rounded-xl">
+              <Link to="/dashboard/classroom">Open classrooms <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            </Button>
+          </div>
 
-            {/* Academy Spotlight */}
-            <div className="glass rounded-3xl p-6 border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 grid place-items-center">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <h3 className="font-bold text-lg">Velora Academy</h3>
+          {/* Partner Spotlight */}
+          <div className="glass rounded-3xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                <HeartHandshake className="h-5 w-5" />
               </div>
-              <p className="text-sm text-muted-foreground mb-6">
-                Master advanced features and hybrid meeting strategies with Iddy Chesire and the team.
-              </p>
-              <Button asChild variant="outline" className="mt-auto border-amber-500/30 hover:bg-amber-500/5 hover:text-amber-500 rounded-xl">
-                <Link to="/dashboard/academy">Start Learning <ArrowRight className="h-4 w-4 ml-2" /></Link>
-              </Button>
+              <h3 className="font-bold text-lg">Partner Ecosystem</h3>
             </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Share Velora and earn recurring rewards. Join our growing network.
+            </p>
+            <Button asChild className="mt-auto bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl">
+              <Link to="/dashboard/partners">Manage referrals <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            </Button>
           </div>
         </section>
 
@@ -314,7 +251,7 @@ function DashboardInner() {
 
             {/* Link expiry */}
             <div className="mt-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+              <p className="text-xs font-bold text-muted-foreground mb-2">
                 Link expires
               </p>
               <div className="flex flex-wrap gap-2">
@@ -338,6 +275,47 @@ function DashboardInner() {
                     {opt.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Capacity */}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-muted-foreground">Meeting capacity</p>
+                <span className="text-xs font-black text-primary">{capacity} guests</span>
+              </div>
+              <input
+                type="range"
+                min={2}
+                max={1000}
+                step={1}
+                value={capacity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (val > 100) {
+                    toast.success("Upgrade to Velora Pro", {
+                      description: "Host up to 1,000 participants with advanced security.",
+                      action: {
+                        label: "View Plans",
+                        onClick: () => navigate({ to: "/dashboard/upgrade" })
+                      },
+                      style: {
+                        backgroundColor: "rgba(34, 197, 94, 0.1)",
+                        border: "1px solid rgba(34, 197, 94, 0.2)",
+                        color: "#22c55e"
+                      }
+                    });
+                    setCapacity(100);
+                  } else {
+                    setCapacity(val);
+                  }
+                }}
+                className="w-full h-1.5 bg-glass-border rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
+                <span>2</span>
+                <span className="text-primary/60">Free limit: 100</span>
+                <span>1000</span>
               </div>
             </div>
 
@@ -365,7 +343,7 @@ function DashboardInner() {
             <div className="mt-5">
               <Label
                 htmlFor="code"
-                className="text-xs uppercase tracking-wider text-muted-foreground"
+                className="text-xs font-bold text-muted-foreground"
               >
                 Meeting code
               </Label>
@@ -384,10 +362,7 @@ function DashboardInner() {
           </div>
         </section>
 
-        {/* Capacity & pricing */}
-        <section className="mt-6">
-          <CapacityPricing capacity={capacity} onCapacityChange={setCapacity} />
-        </section>
+
 
         {/* Recent + quick links */}
         <section className="grid lg:grid-cols-[1.4fr_1fr] gap-4 sm:gap-5 mt-6">
@@ -451,7 +426,7 @@ function DashboardInner() {
             />
             <QuickCard
               to="/dashboard/contacts"
-              icon={<Users2 className="h-5 w-5" />}
+              icon={<Users className="h-5 w-5" />}
               title="Your contacts"
               desc="Save people you meet often."
             />
@@ -480,9 +455,9 @@ function DashboardFooter() {
     <footer className="mt-12 py-8 border-t border-glass-border/50 text-center">
       <p className="text-xs text-muted-foreground mb-2 italic">"Communication is the foundation of craft."</p>
       <div className="flex items-center justify-center gap-2">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-foreground/60">Iddy Chesire</span>
+        <span className="text-[10px] tracking-widest font-bold text-foreground/60">Iddy Chesire</span>
         <div className="h-1 w-1 rounded-full bg-primary/30" />
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">CEO & Co-founder</span>
+        <span className="text-[10px] tracking-widest text-muted-foreground">CEO & Co-founder</span>
       </div>
     </footer>
   );
@@ -556,150 +531,8 @@ function QuickCard({
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-  hint,
-  color,
-  bg,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  hint: string;
-  color?: string;
-  bg?: string;
-}) {
-  return (
-    <div className="glass rounded-2xl p-4 sm:p-5 hover:shadow-elegant transition-all border-glass-border/50">
-      <div className="flex items-center gap-3">
-        <div className={`h-10 w-10 rounded-xl grid place-items-center ${bg || "bg-primary/10"} ${color || "text-primary"}`}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</p>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-2xl font-black leading-none">{value}</span>
-          </div>
-          <p className="text-[10px] text-muted-foreground/80 mt-1 uppercase tracking-tighter font-medium">{hint}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 // ---- Capacity & pricing tiers ----------------------------------------------
 
-type Tier = {
-  name: string;
-  upTo: number;
-  price: string;
-  per: string;
-  highlights: string[];
-  cta: string;
-  recommended?: boolean;
-};
 
-const TIERS: Tier[] = [
-  {
-    name: "Free",
-    upTo: 100,
-    price: "$0",
-    per: "forever",
-    highlights: ["Up to 100 participants", "HD video & screen share", "Live captions & chat"],
-    cta: "Current plan",
-  },
-  {
-    name: "Team",
-    upTo: 250,
-    price: "$9",
-    per: "host / month",
-    highlights: [
-      "Up to 250 participants",
-      "Cloud transcripts",
-      "Custom waiting room",
-      "Priority support",
-    ],
-    cta: "Upgrade to Team",
-    recommended: true,
-  },
-  {
-    name: "Business",
-    upTo: 500,
-    price: "$24",
-    per: "host / month",
-    highlights: [
-      "Up to 500 participants",
-      "Recording & summaries",
-      "SSO & roles",
-      "Analytics dashboard",
-    ],
-    cta: "Upgrade to Business",
-  },
-  {
-    name: "Enterprise",
-    upTo: 1000,
-    price: "Custom",
-    per: "tailored",
-    highlights: [
-      "Up to 1000+ participants",
-      "Dedicated infrastructure",
-      "SLA & compliance",
-      "White-glove onboarding",
-    ],
-    cta: "Talk to sales",
-  },
-];
-
-function tierForCapacity(cap: number): Tier {
-  return TIERS.find((t) => cap <= t.upTo) ?? TIERS[TIERS.length - 1];
-}
-
-function CapacityPricing({
-  capacity,
-  onCapacityChange,
-}: {
-  capacity: number;
-  onCapacityChange: (n: number) => void;
-}) {
-  const active = tierForCapacity(capacity);
-  return (
-    <div className="glass rounded-2xl p-5 sm:p-7">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-semibold flex items-center gap-2">
-            <Users2 className="h-5 w-5 text-primary" /> Meeting capacity
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Set the maximum number of people that can join your next room.
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-3xl font-semibold leading-none">{capacity}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">participants</p>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <input
-          type="range"
-          min={2}
-          max={1000}
-          step={1}
-          value={capacity}
-          onChange={(e) => onCapacityChange(parseInt(e.target.value, 10))}
-          className="w-full accent-primary"
-          aria-label="Meeting capacity"
-        />
-        <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
-          <span>2</span>
-          <span>100</span>
-          <span>250</span>
-          <span>500</span>
-          <span>1000</span>
-        </div>
-      </div>
-    </div>
-  );
-}

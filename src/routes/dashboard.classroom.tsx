@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader } from "@/components/Loader";
+import { useNavigate } from "@tanstack/react-router";
 
 function ClassroomComponent() {
   return (
@@ -104,6 +106,8 @@ function Page() {
       setLoading(false);
     }
   };
+
+  const navigate = useNavigate();
 
   const createClass = async () => {
     if (!newName.trim()) return;
@@ -272,8 +276,8 @@ function Page() {
         </div>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1,2,3].map(i => <div key={i} className="h-64 glass rounded-3xl animate-pulse" />)}
+          <div className="py-20">
+            <Loader label="Synchronizing your classrooms" />
           </div>
         ) : tab === "classes" ? (
           allVisible.length === 0 ? (
@@ -299,47 +303,57 @@ function Page() {
               {allVisible.map(c => {
                 const isOwner = classes.some(o => o.id === c.id);
                 return (
-                  <div key={c.id} className="group glass rounded-3xl border-glass-border hover:border-primary/30 transition-all duration-300 hover:shadow-glow flex flex-col h-64 overflow-hidden relative">
-                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    key={c.id} 
+                    onClick={() => navigate({ to: "/dashboard/classroom/$classId", params: { classId: c.id } })}
+                    className="group glass rounded-[2.5rem] border-glass-border hover:border-primary/30 transition-all duration-500 hover:shadow-brand flex flex-col h-72 overflow-hidden relative cursor-pointer active:scale-95"
+                  >
+                    <div className="absolute top-0 right-0 p-5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-background/50 backdrop-blur-md">
-                            <MoreVertical className="h-4 w-4" />
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-background/50 backdrop-blur-md border border-glass-border shadow-elegant">
+                            <MoreVertical className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="glass border-glass-border">
-                          <DropdownMenuItem className="rounded-lg"><Settings className="h-4 w-4 mr-2" /> Settings</DropdownMenuItem>
-                          {isOwner && <DropdownMenuItem className="rounded-lg text-destructive"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>}
-                          {!isOwner && <DropdownMenuItem className="rounded-lg text-destructive"><ArrowRight className="h-4 w-4 mr-2 rotate-180" /> Leave</DropdownMenuItem>}
+                        <DropdownMenuContent align="end" className="glass border-glass-border p-2 min-w-[160px]">
+                          <DropdownMenuItem className="rounded-lg h-10 px-3"><Settings className="h-4 w-4 mr-2" /> Settings</DropdownMenuItem>
+                          {isOwner && <DropdownMenuItem className="rounded-lg h-10 px-3 text-destructive"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>}
+                          {!isOwner && <DropdownMenuItem className="rounded-lg h-10 px-3 text-destructive"><ArrowRight className="h-4 w-4 mr-2 rotate-180" /> Leave</DropdownMenuItem>}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
 
-                    <div className="p-6 flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className={`h-10 w-10 rounded-xl grid place-items-center group-hover:scale-110 transition-transform ${isOwner ? 'bg-primary/10 text-primary' : 'bg-amber-500/10 text-amber-500'}`}>
-                          {isOwner ? <Users className="h-5 w-5" /> : <GraduationCap className="h-5 w-5" />}
+                    <div className="p-8 flex-1">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className={`h-12 w-12 rounded-2xl grid place-items-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ${isOwner ? 'bg-primary/10 text-primary shadow-glow' : 'bg-amber-500/10 text-amber-500 shadow-glow'}`}>
+                          {isOwner ? <Users className="h-6 w-6" /> : <GraduationCap className="h-6 w-6" />}
                         </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full ${isOwner ? 'bg-primary/10 text-primary' : 'bg-amber-500/10 text-amber-500'}`}>
+                        <span className={`text-[10px] uppercase tracking-[0.2em] font-black px-3 py-1 rounded-full ${isOwner ? 'bg-primary/20 text-primary' : 'bg-amber-500/20 text-amber-500'}`}>
                           {isOwner ? "Lecturer" : "Student"}
                         </span>
                       </div>
                       
-                      <h3 className="text-lg font-bold group-hover:text-primary transition-colors line-clamp-1">{c.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                      <h3 className="text-xl font-black group-hover:text-primary transition-colors line-clamp-1 mb-2">{c.name}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed font-medium">
                         {c.description}
                       </p>
                     </div>
 
-                    <div className="p-4 bg-muted/10 border-t border-glass-border/50 flex gap-2">
-                      <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-sm">
-                        <Link to="/dashboard/classroom/$classId" params={{ classId: c.id }}>
-                          Open Class <ArrowRight className="h-4 w-4 ml-2" />
-                        </Link>
+                    <div className="p-5 bg-gradient-to-t from-muted/20 to-transparent border-t border-glass-border/30 flex gap-3">
+                      <Button className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-glow h-12 font-bold text-sm">
+                        Open Classroom <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                       {isOwner && (
-                        <Button variant="outline" size="icon" className="rounded-xl border-glass-border" title="Quick Meeting">
-                          <Video className="h-4 w-4" />
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="rounded-2xl border-glass-border h-12 w-12 hover:bg-primary/10 hover:text-primary transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Logic to start meeting immediately
+                          }}
+                        >
+                          <Video className="h-5 w-5" />
                         </Button>
                       )}
                     </div>

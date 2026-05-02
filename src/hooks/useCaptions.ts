@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { uuidv4 } from "@/lib/meeting";
 
 // Minimal types for the Web Speech API (not in TS lib by default)
 type SRConstructor = new () => SpeechRecognition;
@@ -66,7 +67,7 @@ export function useCaptions(speaker: string) {
         if (r.isFinal) {
           setLines((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), speaker, text: text.trim(), ts: Date.now() },
+            { id: uuidv4(), speaker, text: text.trim(), ts: Date.now() },
           ]);
         } else {
           interimText += text;

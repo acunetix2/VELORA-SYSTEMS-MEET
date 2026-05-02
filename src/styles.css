@@ -216,10 +216,13 @@
   }
   .animate-float { animation: float-slow 6s ease-in-out infinite; }
 
-  @keyframes ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
   }
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+  }
+
   .animate-ticker {
     display: flex;
     width: max-content;

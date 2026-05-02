@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ThumbsUp, Check, Send, MessageCircleQuestion } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ThumbsUp, Check, Send, MessageCircleQuestion, Mic, MessageSquare, X } from "lucide-react";
+import { toast } from "sonner";
 
 export type Question = {
   id: string;
@@ -10,6 +12,7 @@ export type Question = {
   ts: number;
   upvotes: string[]; // peer ids who upvoted
   answered: boolean;
+  hostAnswer?: string; // typed answer from host
 };
 
 type Props = {
@@ -19,9 +22,11 @@ type Props = {
   onAsk: (text: string) => void;
   onUpvote: (id: string) => void;
   onMarkAnswered: (id: string) => void;
+  onAnswerTyped?: (id: string, answer: string) => void;
+  onAnswerVerbal?: (id: string) => void;
 };
 
-export function QnAPanel({ questions, selfId, isHost, onAsk, onUpvote, onMarkAnswered }: Props) {
+export function QnAPanel({ questions, selfId, isHost, onAsk, onUpvote, onMarkAnswered, onAnswerTyped, onAnswerVerbal }: Props) {
   const [text, setText] = useState("");
   const submit = () => {
     const t = text.trim();
@@ -58,6 +63,8 @@ export function QnAPanel({ questions, selfId, isHost, onAsk, onUpvote, onMarkAns
                   key={q.id} q={q} selfId={selfId} isHost={isHost}
                   onUpvote={() => onUpvote(q.id)}
                   onMarkAnswered={() => onMarkAnswered(q.id)}
+                  onAnswerTyped={onAnswerTyped ? (answer) => onAnswerTyped(q.id, answer) : undefined}
+                  onAnswerVerbal={onAnswerVerbal ? () => onAnswerVerbal(q.id) : undefined}
                 />
               ))}
             </ul>
@@ -97,12 +104,30 @@ export function QnAPanel({ questions, selfId, isHost, onAsk, onUpvote, onMarkAns
 }
 
 function QuestionRow({
-  q, selfId, isHost, onUpvote, onMarkAnswered,
+  q, selfId, isHost, onUpvote, onMarkAnswered, onAnswerTyped, onAnswerVerbal,
 }: {
   q: Question; selfId: string; isHost: boolean;
   onUpvote: () => void; onMarkAnswered: () => void;
+  onAnswerTyped?: (answer: string) => void;
+  onAnswerVerbal?: () => void;
 }) {
   const upvoted = q.upvotes.includes(selfId);
+  const [showAnswerInput, setShowAnswerInput] = useState(false);
+  const [answerText, setAnswerText] = useState("");
+
+  const submitTypedAnswer = () => {
+    if (!answerText.trim()) return;
+    onAnswerTyped?.(answerText.trim());
+    onMarkAnswered();
+    setShowAnswerInput(false);
+    setAnswerText("");
+  };
+
+  const handleVerbal = () => {
+    onAnswerVerbal?.();
+    onMarkAnswered();
+  };
+
   return (
     <li className="glass rounded-xl p-3">
       <div className="flex items-start gap-2">
@@ -119,15 +144,54 @@ function QuestionRow({
         <div className="flex-1 min-w-0">
           <p className="text-[11px] text-muted-foreground">{q.from}</p>
           <p className="text-sm break-words">{q.text}</p>
+          {q.hostAnswer && (
+            <div className="mt-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
+              <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Host's answer</p>
+              <p className="text-sm text-foreground/90">{q.hostAnswer}</p>
+            </div>
+          )}
+          {isHost && !q.answered && showAnswerInput && (
+            <div className="mt-2 space-y-2">
+              <Textarea
+                value={answerText}
+                onChange={(e) => setAnswerText(e.target.value)}
+                placeholder="Type your answer…"
+                className="bg-input/60 border-glass-border text-sm min-h-[70px] resize-none"
+                maxLength={500}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={submitTypedAnswer} disabled={!answerText.trim()} className="bg-primary text-white border-0 rounded-lg h-8 text-xs flex-1">
+                  <Check className="h-3 w-3 mr-1" /> Submit Answer
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowAnswerInput(false); setAnswerText(""); }} className="rounded-lg h-8 text-xs">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-        {isHost && !q.answered && (
-          <button
-            onClick={onMarkAnswered}
-            className="shrink-0 text-[10px] text-success hover:underline inline-flex items-center gap-1"
-            title="Mark as answered"
-          >
+        {isHost && !q.answered && !showAnswerInput && (
+          <div className="shrink-0 flex flex-col gap-1.5 items-end">
+            <button
+              onClick={() => setShowAnswerInput(true)}
+              className="text-[10px] text-primary hover:underline inline-flex items-center gap-1 bg-primary/10 rounded-md px-2 py-1"
+              title="Type an answer"
+            >
+              <MessageSquare className="h-3 w-3" /> Type
+            </button>
+            <button
+              onClick={handleVerbal}
+              className="text-[10px] text-amber-500 hover:underline inline-flex items-center gap-1 bg-amber-500/10 rounded-md px-2 py-1"
+              title="Answer verbally"
+            >
+              <Mic className="h-3 w-3" /> Verbal
+            </button>
+          </div>
+        )}
+        {q.answered && !showAnswerInput && (
+          <span className="shrink-0 text-[10px] text-success inline-flex items-center gap-1">
             <Check className="h-3 w-3" /> Answered
-          </button>
+          </span>
         )}
       </div>
     </li>

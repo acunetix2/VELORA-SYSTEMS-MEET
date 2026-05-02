@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UseCasesRouteImport } from './routes/use-cases'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -22,21 +24,31 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as SummaryMeetingIdRouteImport } from './routes/summary.$meetingId'
 import { Route as MeetMeetingIdRouteImport } from './routes/meet.$meetingId'
+import { Route as JoinOrgIdRouteImport } from './routes/join.$orgId'
+import { Route as DashboardUpgradeRouteImport } from './routes/dashboard.upgrade'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardScheduleRouteImport } from './routes/dashboard.schedule'
 import { Route as DashboardRecordingsRouteImport } from './routes/dashboard.recordings'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
+import { Route as DashboardPartnersRouteImport } from './routes/dashboard.partners'
 import { Route as DashboardMeetingsRouteImport } from './routes/dashboard.meetings'
 import { Route as DashboardFaqRouteImport } from './routes/dashboard.faq'
 import { Route as DashboardEnterpriseRouteImport } from './routes/dashboard.enterprise'
+import { Route as DashboardDeveloperRouteImport } from './routes/dashboard.developer'
 import { Route as DashboardContactsRouteImport } from './routes/dashboard.contacts'
 import { Route as DashboardClassroomRouteImport } from './routes/dashboard.classroom'
 import { Route as DashboardAcademyRouteImport } from './routes/dashboard.academy'
+import { Route as DashboardAboutRouteImport } from './routes/dashboard.about'
 import { Route as DashboardClassroomClassIdRouteImport } from './routes/dashboard.classroom.$classId'
 
 const UseCasesRoute = UseCasesRouteImport.update({
   id: '/use-cases',
   path: '/use-cases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -47,6 +59,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PartnersRoute = PartnersRouteImport.update({
   id: '/partners',
   path: '/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -99,6 +116,16 @@ const MeetMeetingIdRoute = MeetMeetingIdRouteImport.update({
   path: '/meet/$meetingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinOrgIdRoute = JoinOrgIdRouteImport.update({
+  id: '/join/$orgId',
+  path: '/join/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardUpgradeRoute = DashboardUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -119,6 +146,11 @@ const DashboardProfileRoute = DashboardProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPartnersRoute = DashboardPartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardMeetingsRoute = DashboardMeetingsRouteImport.update({
   id: '/meetings',
   path: '/meetings',
@@ -132,6 +164,11 @@ const DashboardFaqRoute = DashboardFaqRouteImport.update({
 const DashboardEnterpriseRoute = DashboardEnterpriseRouteImport.update({
   id: '/enterprise',
   path: '/enterprise',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardDeveloperRoute = DashboardDeveloperRouteImport.update({
+  id: '/developer',
+  path: '/developer',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardContactsRoute = DashboardContactsRouteImport.update({
@@ -149,6 +186,11 @@ const DashboardAcademyRoute = DashboardAcademyRouteImport.update({
   path: '/academy',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAboutRoute = DashboardAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardClassroomClassIdRoute =
   DashboardClassroomClassIdRouteImport.update({
     id: '/$classId',
@@ -164,19 +206,26 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
+  '/onboarding': typeof OnboardingRoute
   '/partners': typeof PartnersRoute
   '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/use-cases': typeof UseCasesRoute
+  '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
+  '/dashboard/developer': typeof DashboardDeveloperRoute
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
   '/dashboard/schedule': typeof DashboardScheduleRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/upgrade': typeof DashboardUpgradeRoute
+  '/join/$orgId': typeof JoinOrgIdRoute
   '/meet/$meetingId': typeof MeetMeetingIdRoute
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -189,19 +238,26 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
+  '/onboarding': typeof OnboardingRoute
   '/partners': typeof PartnersRoute
   '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/use-cases': typeof UseCasesRoute
+  '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
+  '/dashboard/developer': typeof DashboardDeveloperRoute
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
   '/dashboard/schedule': typeof DashboardScheduleRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/upgrade': typeof DashboardUpgradeRoute
+  '/join/$orgId': typeof JoinOrgIdRoute
   '/meet/$meetingId': typeof MeetMeetingIdRoute
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -216,19 +272,26 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
+  '/onboarding': typeof OnboardingRoute
   '/partners': typeof PartnersRoute
   '/profile': typeof ProfileRoute
+  '/terms': typeof TermsRoute
   '/use-cases': typeof UseCasesRoute
+  '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
+  '/dashboard/developer': typeof DashboardDeveloperRoute
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
   '/dashboard/schedule': typeof DashboardScheduleRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/upgrade': typeof DashboardUpgradeRoute
+  '/join/$orgId': typeof JoinOrgIdRoute
   '/meet/$meetingId': typeof MeetMeetingIdRoute
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -244,19 +307,26 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/enterprise'
     | '/faq'
+    | '/onboarding'
     | '/partners'
     | '/profile'
+    | '/terms'
     | '/use-cases'
+    | '/dashboard/about'
     | '/dashboard/academy'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
+    | '/dashboard/developer'
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
     | '/dashboard/schedule'
     | '/dashboard/settings'
+    | '/dashboard/upgrade'
+    | '/join/$orgId'
     | '/meet/$meetingId'
     | '/summary/$meetingId'
     | '/dashboard/'
@@ -269,19 +339,26 @@ export interface FileRouteTypes {
     | '/auth'
     | '/enterprise'
     | '/faq'
+    | '/onboarding'
     | '/partners'
     | '/profile'
+    | '/terms'
     | '/use-cases'
+    | '/dashboard/about'
     | '/dashboard/academy'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
+    | '/dashboard/developer'
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
     | '/dashboard/schedule'
     | '/dashboard/settings'
+    | '/dashboard/upgrade'
+    | '/join/$orgId'
     | '/meet/$meetingId'
     | '/summary/$meetingId'
     | '/dashboard'
@@ -295,19 +372,26 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/enterprise'
     | '/faq'
+    | '/onboarding'
     | '/partners'
     | '/profile'
+    | '/terms'
     | '/use-cases'
+    | '/dashboard/about'
     | '/dashboard/academy'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
+    | '/dashboard/developer'
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
     | '/dashboard/schedule'
     | '/dashboard/settings'
+    | '/dashboard/upgrade'
+    | '/join/$orgId'
     | '/meet/$meetingId'
     | '/summary/$meetingId'
     | '/dashboard/'
@@ -322,9 +406,12 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   EnterpriseRoute: typeof EnterpriseRoute
   FaqRoute: typeof FaqRoute
+  OnboardingRoute: typeof OnboardingRoute
   PartnersRoute: typeof PartnersRoute
   ProfileRoute: typeof ProfileRoute
+  TermsRoute: typeof TermsRoute
   UseCasesRoute: typeof UseCasesRoute
+  JoinOrgIdRoute: typeof JoinOrgIdRoute
   MeetMeetingIdRoute: typeof MeetMeetingIdRoute
   SummaryMeetingIdRoute: typeof SummaryMeetingIdRoute
 }
@@ -336,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/use-cases'
       fullPath: '/use-cases'
       preLoaderRoute: typeof UseCasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -350,6 +444,13 @@ declare module '@tanstack/react-router' {
       path: '/partners'
       fullPath: '/partners'
       preLoaderRoute: typeof PartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -422,6 +523,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetMeetingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$orgId': {
+      id: '/join/$orgId'
+      path: '/join/$orgId'
+      fullPath: '/join/$orgId'
+      preLoaderRoute: typeof JoinOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/upgrade': {
+      id: '/dashboard/upgrade'
+      path: '/upgrade'
+      fullPath: '/dashboard/upgrade'
+      preLoaderRoute: typeof DashboardUpgradeRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -450,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProfileRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/partners': {
+      id: '/dashboard/partners'
+      path: '/partners'
+      fullPath: '/dashboard/partners'
+      preLoaderRoute: typeof DashboardPartnersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/meetings': {
       id: '/dashboard/meetings'
       path: '/meetings'
@@ -471,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEnterpriseRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/developer': {
+      id: '/dashboard/developer'
+      path: '/developer'
+      fullPath: '/dashboard/developer'
+      preLoaderRoute: typeof DashboardDeveloperRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/contacts': {
       id: '/dashboard/contacts'
       path: '/contacts'
@@ -490,6 +619,13 @@ declare module '@tanstack/react-router' {
       path: '/academy'
       fullPath: '/dashboard/academy'
       preLoaderRoute: typeof DashboardAcademyRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/about': {
+      id: '/dashboard/about'
+      path: '/about'
+      fullPath: '/dashboard/about'
+      preLoaderRoute: typeof DashboardAboutRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/classroom/$classId': {
@@ -514,30 +650,38 @@ const DashboardClassroomRouteWithChildren =
   DashboardClassroomRoute._addFileChildren(DashboardClassroomRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardAboutRoute: typeof DashboardAboutRoute
   DashboardAcademyRoute: typeof DashboardAcademyRoute
   DashboardClassroomRoute: typeof DashboardClassroomRouteWithChildren
   DashboardContactsRoute: typeof DashboardContactsRoute
+  DashboardDeveloperRoute: typeof DashboardDeveloperRoute
   DashboardEnterpriseRoute: typeof DashboardEnterpriseRoute
   DashboardFaqRoute: typeof DashboardFaqRoute
   DashboardMeetingsRoute: typeof DashboardMeetingsRoute
+  DashboardPartnersRoute: typeof DashboardPartnersRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardRecordingsRoute: typeof DashboardRecordingsRoute
   DashboardScheduleRoute: typeof DashboardScheduleRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardUpgradeRoute: typeof DashboardUpgradeRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAboutRoute: DashboardAboutRoute,
   DashboardAcademyRoute: DashboardAcademyRoute,
   DashboardClassroomRoute: DashboardClassroomRouteWithChildren,
   DashboardContactsRoute: DashboardContactsRoute,
+  DashboardDeveloperRoute: DashboardDeveloperRoute,
   DashboardEnterpriseRoute: DashboardEnterpriseRoute,
   DashboardFaqRoute: DashboardFaqRoute,
   DashboardMeetingsRoute: DashboardMeetingsRoute,
+  DashboardPartnersRoute: DashboardPartnersRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardRecordingsRoute: DashboardRecordingsRoute,
   DashboardScheduleRoute: DashboardScheduleRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardUpgradeRoute: DashboardUpgradeRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
@@ -553,9 +697,12 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   EnterpriseRoute: EnterpriseRoute,
   FaqRoute: FaqRoute,
+  OnboardingRoute: OnboardingRoute,
   PartnersRoute: PartnersRoute,
   ProfileRoute: ProfileRoute,
+  TermsRoute: TermsRoute,
   UseCasesRoute: UseCasesRoute,
+  JoinOrgIdRoute: JoinOrgIdRoute,
   MeetMeetingIdRoute: MeetMeetingIdRoute,
   SummaryMeetingIdRoute: SummaryMeetingIdRoute,
 }

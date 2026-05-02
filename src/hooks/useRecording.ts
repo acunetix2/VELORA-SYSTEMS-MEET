@@ -1,74 +1,93 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-/**
- * Local meeting recording. Records the host's local stream (camera + mic, or
- * screen-share when active because it replaces the local video track) into a
- * .webm file the host can download when they stop.
- *
- * This is intentionally LOCAL ONLY — no server upload — to keep things simple
- * and private. Other participants are notified via a separate broadcast.
- */
-export function useRecording(getStream: () => MediaStream | null) {
-  const recRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const startedAtRef = useRef<number>(0);
+export function useRecording(meetingId: string, localStream: MediaStream | null, peers: { stream: MediaStream | null }[]) {
   const [recording, setRecording] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const start = useCallback(() => {
-    const stream = getStream();
-    if (!stream) {
-      toast.error("Recording needs an active camera or mic.");
-      return false;
+    if (!localStream) {
+      toast.error("No media stream to record");
+      return;
     }
-    if (recRef.current) return true;
+
+    // Combine local and remote streams for a full recording
+    // In a simple version, we just record the local user's perspective
+    // For a real meeting platform, we might want to composite these onto a canvas
+    // For now, let's record the local stream as the primary source
+    
+    chunksRef.current = [];
     try {
-      const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-        ? "video/webm;codecs=vp9,opus"
-        : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-        ? "video/webm;codecs=vp8,opus"
-        : "video/webm";
-      const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 1_500_000 });
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      const recorder = new MediaRecorder(localStream, {
+        mimeType: "video/webm;codecs=vp8,opus",
+        videoBitsPerSecond: 2500000, // 2.5 Mbps
+      });
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
       };
-      rec.start(1000); // gather 1s chunks
-      recRef.current = rec;
-      startedAtRef.current = Date.now();
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        await upload(blob);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000); // chunk every second
       setRecording(true);
-      return true;
+      toast.info("Recording started. Please stay in the meeting to ensure it saves correctly.");
     } catch (e) {
-      console.error(e);
-      toast.error("Couldn't start recording on this device.");
-      return false;
+      console.error("Recording failed", e);
+      toast.error("Failed to start recording");
     }
-  }, [getStream]);
+  }, [localStream]);
 
   const stop = useCallback(() => {
-    const rec = recRef.current;
-    if (!rec) return;
-    return new Promise<void>((resolve) => {
-      rec.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        const ts = new Date().toISOString().replace(/[:.]/g, "-");
-        a.href = url;
-        a.download = `velora-meeting-${ts}.webm`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-        recRef.current = null;
-        chunksRef.current = [];
-        setRecording(false);
-        resolve();
-      };
-      rec.stop();
-    });
-  }, []);
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  }, [recording]);
 
-  // Stop on unmount — but DO NOT trigger a download from a teardown effect.
-  useEffect(() => () => { try { recRef.current?.stop(); } catch { /* noop */ } }, []);
+  const upload = async (blob: Blob) => {
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-  return { recording, start, stop };
+      const path = `recordings/${user.id}/${meetingId}_${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("recordings")
+        .upload(path, blob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("recordings").getPublicUrl(path);
+
+      // Save reference in transcripts or a new recordings table
+      // Let's use transcripts table as it already exists and holds meeting history
+      const { error: dbError } = await supabase
+        .from("transcripts" as any)
+        .insert({
+          meeting_id: meetingId,
+          user_id: user.id,
+          video_url: publicUrl,
+          content: ["System: Video recording saved."],
+        });
+
+      if (dbError) throw dbError;
+
+      toast.success("Recording saved to your activity section.");
+    } catch (e) {
+      console.error("Upload failed", e);
+      toast.error("Failed to save recording.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return { recording, uploading, start, stop };
 }

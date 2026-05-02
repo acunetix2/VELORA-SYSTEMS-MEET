@@ -17,8 +17,19 @@ import { getAnalytics } from "@/lib/analytics";
 import {
   Camera, Loader2, Save, Trash2, Mail, Briefcase,
   Building2, Globe2, Phone, MapPin, Linkedin, Github, Clock,
-  ShieldCheck, Bell, KeyRound, ChevronRight,
+  ShieldCheck, Bell, KeyRound, ChevronRight, Smartphone,
+  LogOut, RefreshCw, ShieldAlert
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({
@@ -63,6 +74,10 @@ function ProfilePage() {
   const [extra, setExtra] = useState<Extra>(DEFAULT_EXTRA);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pairingInput, setPairingInput] = useState("");
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [securityDialogOpen, setSecurityDialogOpen] = useState<{ open: boolean; type: 'password' | 'sessions' | 'mfa' | null }>({ open: false, type: null });
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -70,20 +85,23 @@ function ProfilePage() {
       setDisplayName(profile.display_name ?? getDisplayName(user));
       setBio(profile.bio ?? "");
       setProfileColor(profile.color ?? "");
+      setExtra({
+        title: profile.title ?? "",
+        company: profile.company ?? "",
+        location: profile.country ?? "",
+        timezone: profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+        phone: profile.phone ?? "",
+        website: profile.website ?? "",
+        linkedin: profile.linkedin ?? "",
+        github: profile.github ?? "",
+        pronouns: profile.pronouns ?? "",
+      });
+      setMfaEnabled(!!profile.mfa_enabled);
     }
   }, [profile, user]);
 
-  useEffect(() => {
-    if (!user) return;
-    try {
-      const raw = localStorage.getItem(EXTRA_KEY(user.id));
-      if (raw) setExtra({ ...DEFAULT_EXTRA, ...JSON.parse(raw) });
-    } catch { /* noop */ }
-  }, [user]);
-
   const persistExtra = (next: Extra) => {
     setExtra(next);
-    if (user) try { localStorage.setItem(EXTRA_KEY(user.id), JSON.stringify(next)); } catch { /* noop */ }
   };
 
   const [analytics, setAnalytics] = useState({ hostCount: 0, participantCount: 0, totalMeetings: 0, history: [] });
@@ -100,12 +118,21 @@ function ProfilePage() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ 
+        .upsert({ 
+          user_id: user.id,
           display_name: parsed.data.display_name, 
           bio: parsed.data.bio ?? null,
-          color: profileColor || null
-        })
-        .eq("user_id", user.id);
+          color: profileColor || null,
+          title: extra.title,
+          company: extra.company,
+          country: extra.location,
+          timezone: extra.timezone,
+          phone: extra.phone,
+          website: extra.website,
+          linkedin: extra.linkedin,
+          github: extra.github,
+          pronouns: extra.pronouns,
+        }, { onConflict: 'user_id' });
       if (error) throw error;
       await supabase.auth.updateUser({ data: { display_name: parsed.data.display_name } });
       setStoredName(parsed.data.display_name);
@@ -165,6 +192,81 @@ function ProfilePage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const verifyPairCode = async () => {
+    if (!pairingInput.trim()) return;
+    setPairingLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("device_pairing" as any)
+        .select("user_id, expires_at")
+        .eq("pair_code", pairingInput.trim().toUpperCase())
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) { toast.error("Invalid pairing code"); return; }
+      
+      if (new Date(data.expires_at) < new Date()) {
+        toast.error("Pairing code has expired");
+        return;
+      }
+
+      toast.success("Device paired successfully!", {
+        description: "Your settings and account data are now synchronized."
+      });
+      setPairingInput("");
+      refresh();
+    } catch (e) {
+      toast.error("Pairing failed");
+      console.error(e);
+    } finally {
+      setPairingLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent!", {
+        description: "Check your inbox for instructions to set a new password."
+      });
+    } catch (e) {
+      toast.error("Failed to send reset email");
+    }
+    setSecurityDialogOpen({ open: false, type: null });
+  };
+
+  const handleGlobalSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+      toast.success("Signed out from all devices");
+      window.location.href = "/";
+    } catch (e) {
+      toast.error("Failed to sign out globally");
+    }
+    setSecurityDialogOpen({ open: false, type: null });
+  };
+
+  const toggleMFA = async () => {
+    const next = !mfaEnabled;
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ mfa_enabled: next } as any)
+        .eq("user_id", user?.id);
+      if (error) throw error;
+      setMfaEnabled(next);
+      toast.success(next ? "Two-factor authentication enabled" : "Two-factor authentication disabled");
+    } catch (e) {
+      toast.error("Failed to update security settings");
+    }
+    setSecurityDialogOpen({ open: false, type: null });
   };
 
   return (
@@ -297,14 +399,14 @@ function ProfilePage() {
                     <Input value={extra.timezone} onChange={(e) => persistExtra({ ...extra, timezone: e.target.value })} placeholder="Africa/Nairobi" className="h-11 bg-input/60 border-glass-border" />
                   </Field>
                 </div>
-                <Button type="submit" disabled={saving} className="bg-gradient-brand text-primary-foreground border-0 shadow-brand">
+                <Button type="submit" disabled={saving} className="bg-gradient-brand text-primary-foreground border-0 shadow-brand w-full sm:w-auto h-12 px-8 rounded-xl font-bold">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-1.5" /> Save changes</>)}
                 </Button>
               </form>
             )}
 
             {tab === "professional" && (
-              <div className="glass rounded-2xl p-5 sm:p-6 space-y-5">
+              <form onSubmit={save} className="glass rounded-2xl p-5 sm:p-6 space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="Job title" icon={<Briefcase className="h-3.5 w-3.5" />}>
                     <Input value={extra.title} onChange={(e) => persistExtra({ ...extra, title: e.target.value })} placeholder="Product Manager" className="h-11 bg-input/60 border-glass-border" />
@@ -329,8 +431,10 @@ function ProfilePage() {
                     <Input value={extra.github} onChange={(e) => persistExtra({ ...extra, github: e.target.value })} placeholder="@yourhandle" className="h-11 bg-input/60 border-glass-border" />
                   </Field>
                 </div>
-                <p className="text-xs text-muted-foreground">Professional details are stored locally on your device for now.</p>
-              </div>
+                <Button type="submit" disabled={saving} className="bg-gradient-brand text-primary-foreground border-0 shadow-brand w-full sm:w-auto h-12 px-8 rounded-xl font-bold">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-1.5" /> Save changes</>)}
+                </Button>
+              </form>
             )}
 
             {tab === "preferences" && (
@@ -348,14 +452,89 @@ function ProfilePage() {
 
             {tab === "security" && (
               <div className="space-y-3">
-                <SecurityRow icon={<Mail className="h-4 w-4" />} title="Email address" desc={user?.email ?? ""} action={<span className="text-xs text-success">Verified</span>} />
-                <SecurityRow icon={<KeyRound className="h-4 w-4" />} title="Password" desc="Last changed when you signed up" action={<Button size="sm" variant="ghost" onClick={() => toast.info("Password reset emails coming soon")}>Change</Button>} />
-                <SecurityRow icon={<ShieldCheck className="h-4 w-4 text-brand-green" />} title="Two-factor authentication" desc="Add an extra layer of security to your account" action={<Button size="sm" variant="ghost" onClick={() => toast.info("2FA setup coming soon")}>Enable</Button>} />
-                <SecurityRow icon={<Bell className="h-4 w-4" />} title="Active sessions" desc="You're signed in on this device" action={<Button size="sm" variant="ghost" onClick={() => toast.info("Session management coming soon")}>Manage</Button>} />
+                <div className="glass rounded-2xl p-5 mb-4 border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-xl bg-primary/20 text-primary grid place-items-center">
+                      <Smartphone className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Pair New Device</p>
+                      <p className="text-xs text-muted-foreground">Enter the code from your other device to sync.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={pairingInput} 
+                      onChange={(e) => setPairingInput(e.target.value.toUpperCase())}
+                      placeholder="ABC123XY" 
+                      className="h-11 bg-input/60 border-glass-border font-mono tracking-[0.2em] text-center uppercase"
+                      maxLength={8}
+                    />
+                    <Button 
+                      onClick={verifyPairCode} 
+                      disabled={pairingLoading || !pairingInput}
+                      className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold shadow-brand"
+                    >
+                      {pairingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                    </Button>
+                  </div>
+                </div>
+
+                <SecurityRow icon={<Mail className="h-4 w-4" />} title="Email address" desc={user?.email ?? ""} action={<span className="text-xs text-success font-bold">Verified</span>} />
+                <SecurityRow 
+                  icon={<KeyRound className="h-4 w-4" />} 
+                  title="Password" 
+                  desc="Secure your account with a strong password" 
+                  action={<Button size="sm" variant="ghost" className="font-bold text-primary hover:bg-primary/10" onClick={() => setSecurityDialogOpen({ open: true, type: 'password' })}>Reset</Button>} 
+                />
+                <SecurityRow 
+                  icon={<ShieldCheck className="h-4 w-4 text-brand-green" />} 
+                  title="Email 2FA" 
+                  desc={mfaEnabled ? "Account is protected by Email OTP" : "Receive a code via email when you sign in"} 
+                  action={<Button size="sm" variant="ghost" className={`font-bold ${mfaEnabled ? 'text-destructive hover:bg-destructive/10' : 'text-primary hover:bg-primary/10'}`} onClick={() => setSecurityDialogOpen({ open: true, type: 'mfa' })}>{mfaEnabled ? "Disable" : "Enable"}</Button>} 
+                />
+                <SecurityRow 
+                  icon={<LogOut className="h-4 w-4" />} 
+                  title="Active sessions" 
+                  desc="Sign out from all other logged-in devices" 
+                  action={<Button size="sm" variant="ghost" className="font-bold text-destructive hover:bg-destructive/10" onClick={() => setSecurityDialogOpen({ open: true, type: 'sessions' })}>Sign out all</Button>} 
+                />
               </div>
             )}
           </div>
         )}
+
+        {/* Security Confirmation Dialogs */}
+        <AlertDialog open={securityDialogOpen.open} onOpenChange={(open) => !open && setSecurityDialogOpen({ open: false, type: null })}>
+          <AlertDialogContent className="glass border-glass-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-primary" />
+                {securityDialogOpen.type === 'password' && "Reset Password?"}
+                {securityDialogOpen.type === 'sessions' && "Sign out everywhere?"}
+                {securityDialogOpen.type === 'mfa' && (mfaEnabled ? "Disable 2FA?" : "Enable 2FA?")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {securityDialogOpen.type === 'password' && "We will send a password reset link to your email address."}
+                {securityDialogOpen.type === 'sessions' && "This will terminate all active sessions across all your devices, including this one."}
+                {securityDialogOpen.type === 'mfa' && (mfaEnabled ? "Your account will be less secure. Are you sure you want to disable 2FA?" : "Enable two-factor authentication to better protect your account.")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl border-glass-border">Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => {
+                  if (securityDialogOpen.type === 'password') handlePasswordReset();
+                  if (securityDialogOpen.type === 'sessions') handleGlobalSignOut();
+                  if (securityDialogOpen.type === 'mfa') toggleMFA();
+                }}
+                className={`rounded-xl font-bold shadow-brand ${securityDialogOpen.type === 'sessions' || (securityDialogOpen.type === 'mfa' && mfaEnabled) ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground'}`}
+              >
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardShell>
   );

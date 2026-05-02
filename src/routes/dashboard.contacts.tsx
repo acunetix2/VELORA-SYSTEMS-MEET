@@ -6,7 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Mail, Users2, ChevronDown, User, ExternalLink, Video } from "lucide-react";
+import { Plus, Trash2, Mail, Users2, ChevronDown, User, ExternalLink, Video, Phone, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { generateMeetingId } from "@/lib/meeting";
@@ -24,7 +24,15 @@ export const Route = createFileRoute("/dashboard/contacts")({
   component: ContactsComponent,
 });
 
-type Contact = { id: string; name: string; email: string };
+type Contact = { 
+  id: string; 
+  name: string; 
+  email: string;
+  phone?: string;
+  company?: string;
+  job_role?: string;
+  notes?: string;
+};
 const KEY = "velora:contacts";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +42,10 @@ function Page() {
   const [items, setItems] = useState<Contact[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [notes, setNotes] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,7 +79,11 @@ function Page() {
       .insert({
         user_id: user.id,
         name: name.trim(),
-        email: email.trim()
+        email: email.trim(),
+        phone: phone.trim(),
+        company: company.trim(),
+        job_role: jobRole.trim(),
+        notes: notes.trim()
       })
       .select()
       .single();
@@ -78,7 +94,7 @@ function Page() {
     }
 
     setItems([data, ...items]);
-    setName(""); setEmail("");
+    setName(""); setEmail(""); setPhone(""); setCompany(""); setJobRole(""); setNotes("");
     toast.success("Contact added");
   };
 
@@ -102,7 +118,7 @@ function Page() {
     toast.success(`Starting call with ${contactName}...`, {
       description: "Redirecting you to a private meeting room."
     });
-    navigate({ to: "/meet/$meetingId", params: { meetingId: mid }, search: { mode: "private", host: 1 } });
+    navigate({ to: "/meet/$meetingId", params: { meetingId: mid }, search: { mode: "private" } });
   };
 
   return (
@@ -134,6 +150,44 @@ function Page() {
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   placeholder="jane@example.com" 
+                  className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-green-500/20" 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Phone</Label>
+                  <Input 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    placeholder="+254..." 
+                    className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-green-500/20" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Company</Label>
+                  <Input 
+                    value={company} 
+                    onChange={(e) => setCompany(e.target.value)} 
+                    placeholder="Acme Inc" 
+                    className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-green-500/20" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Job Role</Label>
+                <Input 
+                  value={jobRole} 
+                  onChange={(e) => setJobRole(e.target.value)} 
+                  placeholder="Senior Lead" 
+                  className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-green-500/20" 
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Private Notes</Label>
+                <Input 
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)} 
+                  placeholder="Met at tech conference..." 
                   className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-green-500/20" 
                 />
               </div>
@@ -184,7 +238,15 @@ function Page() {
                         <Avatar name={c.name} size="lg" className="ring-2 ring-glass-border ring-offset-2 ring-offset-background" />
                         <div className="min-w-0">
                           <h3 className="font-bold text-base truncate">{c.name}</h3>
-                          <p className="text-xs text-muted-foreground truncate">{c.email || "No email provided"}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground truncate">{c.email || "No email"}</p>
+                            {c.company && (
+                              <>
+                                <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                <p className="text-xs text-primary font-medium truncate">{c.company}</p>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -200,11 +262,27 @@ function Page() {
                           <div className="space-y-3">
                             <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Information</h4>
                             <div className="space-y-2">
-                              <div className="flex items-center gap-3 text-sm text-foreground/80">
-                                <Mail className="h-4 w-4 text-green-500" />
-                                {c.email || "Not set"}
-                              </div>
+                              {c.email && (
+                                <div className="flex items-center gap-3 text-sm text-foreground/80">
+                                  <Mail className="h-4 w-4 text-green-500" /> {c.email}
+                                </div>
+                              )}
+                              {c.phone && (
+                                <div className="flex items-center gap-3 text-sm text-foreground/80">
+                                  <Phone className="h-4 w-4 text-green-500" /> {c.phone}
+                                </div>
+                              )}
+                              {c.job_role && (
+                                <div className="flex items-center gap-3 text-sm text-foreground/80">
+                                  <Briefcase className="h-4 w-4 text-green-500" /> {c.job_role}
+                                </div>
+                              )}
                             </div>
+                            {c.notes && (
+                              <div className="mt-4 p-3 rounded-xl bg-muted/20 border border-glass-border text-xs text-muted-foreground italic">
+                                "{c.notes}"
+                              </div>
+                            )}
                           </div>
                           <div className="space-y-3">
                             <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Actions</h4>

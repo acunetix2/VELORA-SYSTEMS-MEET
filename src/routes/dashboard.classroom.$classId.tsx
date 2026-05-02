@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { generateMeetingId } from "@/lib/meeting";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader } from "@/components/Loader";
 
 function ClassDetailComponent() {
   return (
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/dashboard/classroom/$classId")({
 function Page() {
   const { classId } = Route.useParams();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"students" | "sessions" | "resources">("students");
+  const [tab, setTab] = useState<"students" | "sessions" | "resources" | "assignments">("students");
   const [cls, setCls] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isHost, setIsHost] = useState(false);
@@ -98,8 +99,8 @@ function Page() {
 
   if (loading) return (
     <DashboardShell title="Loading Class...">
-      <div className="h-[60vh] grid place-items-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="h-[60vh] flex items-center justify-center">
+        <Loader label="Synchronizing class data" />
       </div>
     </DashboardShell>
   );
@@ -152,19 +153,24 @@ function Page() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-muted/20 p-1 rounded-2xl w-fit">
-              {(["students", "sessions", "resources"] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`px-6 py-2 rounded-xl text-sm font-bold transition-all capitalize ${tab === t ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "students" ? (isHost ? "Students" : "Classmates") : t === "sessions" ? "Past Sessions" : "Materials"}
-                </button>
-              ))}
-            </div>
+              <div className="flex gap-1 bg-muted/20 p-1 rounded-2xl w-fit">
+                {(["students", "sessions", "resources", "assignments"] as const).map(t => (
+                  <button key={t} onClick={() => setTab(t)}
+                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all capitalize ${tab === t ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                    {t === "students" ? (isHost ? "Students" : "Classmates") : t === "sessions" ? "Past sessions" : t === "resources" ? "Materials" : "Assignments"}
+                  </button>
+                ))}
+              </div>
 
             <div className="glass rounded-[2rem] border-glass-border p-2 min-h-[400px]">
               {tab === "students" && <StudentList classId={classId} isHost={isHost} />}
               {tab === "sessions" && <SessionHistory classId={classId} isHost={isHost} meetingId={cls?.meeting_id} />}
               {tab === "resources" && <ResourceLibrary classId={classId} isHost={isHost} currentUser={currentUser} />}
+              {tab === "assignments" && <AssignmentManager classId={classId} isHost={isHost} currentUser={currentUser} />}
+            </div>
+            
+            <div className="mt-8">
+              <CommentSection classId={classId} currentUser={currentUser} />
             </div>
           </div>
 
@@ -268,11 +274,18 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search members..." className="pl-9 h-10 rounded-xl bg-card/40 border-glass-border" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        {isHost && (
-          <Button onClick={() => setIsInviting(true)} className="w-full sm:w-auto bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl h-10 border-0 font-bold">
-            <Plus className="h-4 w-4 mr-2" /> Add Student
-          </Button>
-        )}
+        <div className="flex gap-2 w-full sm:w-auto">
+          {isHost && (
+            <Button onClick={() => window.print()} variant="outline" className="flex-1 sm:flex-none rounded-xl h-10 border-glass-border font-bold">
+              <FileText className="h-4 w-4 mr-2" /> Print list
+            </Button>
+          )}
+          {isHost && (
+            <Button onClick={() => setIsInviting(true)} className="flex-1 sm:flex-none bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl h-10 border-0 font-bold">
+              <Plus className="h-4 w-4 mr-2" /> Add student
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -567,6 +580,167 @@ function ResourceLibrary({ classId, isHost, currentUser }: { classId: string; is
           ))}
         </div>
       )}
+    </div>
+  );
+}
+/* ─── Assignment Manager ─── */
+function AssignmentManager({ classId, isHost, currentUser }: { classId: string; isHost: boolean; currentUser: any }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { fetchAssignments(); }, [classId]);
+
+  const fetchAssignments = async () => {
+    try {
+      setLoading(true);
+      const { data } = await supabase
+        .from("classroom_assignments" as any)
+        .select("*, student:profiles(*)")
+        .eq("classroom_id", classId)
+        .order("created_at", { ascending: false });
+      setItems(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+    setUploading(true);
+    toast.loading("Uploading assignment...");
+
+    const path = `assignments/${classId}/${currentUser.id}/${Date.now()}_${file.name}`;
+    const { data: storageData, error: storageErr } = await supabase.storage
+      .from("classroom-resources")
+      .upload(path, file);
+
+    if (storageErr) {
+      toast.error("Upload failed");
+      setUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("classroom-resources").getPublicUrl(path);
+
+    await supabase.from("classroom_assignments" as any).insert({
+      classroom_id: classId,
+      student_id: currentUser.id,
+      uploaded_by: currentUser.id,
+      title: file.name,
+      file_url: publicUrl
+    });
+
+    toast.success("Assignment uploaded", { id: "upload" });
+    fetchAssignments();
+    setUploading(false);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="font-black text-lg">Assignments</h3>
+          <p className="text-xs text-muted-foreground">{isHost ? "Student submissions" : "Your uploads"}</p>
+        </div>
+        {!isHost && (
+          <div>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
+            <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="rounded-xl font-bold">
+              <Upload className="h-4 w-4 mr-2" /> Upload submission
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
+      ) : items.length === 0 ? (
+        <div className="py-20 text-center text-muted-foreground italic">No assignments submitted yet.</div>
+      ) : (
+        <div className="grid gap-3">
+          {items.map(a => (
+            <div key={a.id} className="flex items-center gap-4 p-4 rounded-2xl border border-glass-border bg-card/40">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{a.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  By {a.student?.display_name || "Student"} · {new Date(a.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <Button asChild size="sm" variant="ghost" className="rounded-xl">
+                <a href={a.file_url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Comment Section ─── */
+function CommentSection({ classId, currentUser }: { classId: string; currentUser: any }) {
+  const [comments, setComments] = useState<any[]>([]);
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { fetchComments(); }, [classId]);
+
+  const fetchComments = async () => {
+    const { data } = await supabase
+      .from("classroom_comments" as any)
+      .select("*, author:profiles(*)")
+      .eq("classroom_id", classId)
+      .order("created_at", { ascending: true });
+    setComments(data || []);
+    setLoading(false);
+  };
+
+  const post = async () => {
+    if (!text.trim() || !currentUser) return;
+    await supabase.from("classroom_comments" as any).insert({
+      classroom_id: classId,
+      author_id: currentUser.id,
+      comment: text.trim()
+    });
+    setText("");
+    fetchComments();
+  };
+
+  return (
+    <div className="glass rounded-[2rem] p-6 border-glass-border">
+      <h3 className="font-black text-lg mb-4">Class discussion</h3>
+      <div className="space-y-4 max-h-[400px] overflow-y-auto mb-6 pr-2 no-scrollbar">
+        {comments.map(c => (
+          <div key={c.id} className="flex gap-3">
+            <Avatar name={c.author?.display_name} size="sm" />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold">{c.author?.display_name}</span>
+                <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <p className="text-sm text-foreground/80 mt-0.5">{c.comment}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input 
+          value={text} 
+          onChange={e => setText(e.target.value)} 
+          placeholder="Share a thought with the class..." 
+          className="bg-card/40 rounded-xl h-11"
+          onKeyDown={e => e.key === "Enter" && post()}
+        />
+        <Button onClick={post} disabled={!text.trim()} className="rounded-xl h-11 px-6 font-bold">Post</Button>
+      </div>
     </div>
   );
 }

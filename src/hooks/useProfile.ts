@@ -9,6 +9,16 @@ export type Profile = {
   avatar_url: string | null;
   bio: string | null;
   color: string | null;
+  country: string | null;
+  timezone: string | null;
+  terms_accepted_at: string | null;
+  pronouns: string | null;
+  title: string | null;
+  company: string | null;
+  phone: string | null;
+  website: string | null;
+  linkedin: string | null;
+  github: string | null;
   updated_at: string;
 };
 

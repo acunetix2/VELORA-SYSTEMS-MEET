@@ -23,8 +23,10 @@ function save(items: MeetingLog[]) {
   try { localStorage.setItem(KEY, JSON.stringify(items.slice(0, 200))); } catch { /* noop */ }
 }
 
+import { uuidv4 } from "@/lib/meeting";
+
 export function logMeeting(entry: Omit<MeetingLog, "id">) {
-  const item: MeetingLog = { ...entry, id: crypto.randomUUID() };
+  const item: MeetingLog = { ...entry, id: uuidv4() };
   const next = [item, ...load()];
   save(next);
   if (typeof window !== "undefined") {

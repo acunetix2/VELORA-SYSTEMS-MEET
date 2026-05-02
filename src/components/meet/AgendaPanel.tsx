@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, Circle, Plus, Trash2, GripVertical } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import { uuidv4 } from "@/lib/meeting";
+
 type AgendaItem = { id: string; text: string; done: boolean };
 
 type Props = {
@@ -17,7 +19,7 @@ export function AgendaPanel({ items, onUpdate, isHost }: Props) {
 
   const addItem = () => {
     if (!newItem.trim()) return;
-    onUpdate([...items, { id: crypto.randomUUID(), text: newItem.trim(), done: false }]);
+    onUpdate([...items, { id: uuidv4(), text: newItem.trim(), done: false }]);
     setNewItem("");
   };
 
@@ -34,7 +36,7 @@ export function AgendaPanel({ items, onUpdate, isHost }: Props) {
       <div className="p-4 border-b border-glass-border">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-primary" />
-          Meeting Agenda
+          Meeting agenda
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
           Stay on track with shared agenda items.

@@ -7,7 +7,7 @@ import { useAuth, getDisplayName } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useWebRTC, type ConnectionQuality } from "@/hooks/useWebRTC";
 import { useCaptions } from "@/hooks/useCaptions";
-import { getLocalMeeting, type MeetingPrivacy } from "@/lib/meeting";
+import { getLocalMeeting, type MeetingPrivacy, uuidv4 } from "@/lib/meeting";
 import { useRecording } from "@/hooks/useRecording";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,6 @@ import {
 
 const searchSchema = z.object({
   mode: z.enum(["open", "private"]).optional().catch(undefined),
-  host: z.coerce.number().optional().catch(undefined),
 });
 
 function MeetingComponent() {
@@ -139,8 +138,8 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
         if (data) {
           setIsCreator(data.host_id === user.id);
         } else {
-          // Fallback to local storage/search params if not in DB yet (e.g. legacy/instant)
-          setIsCreator(!!search.host || (!!local && local.hostUserId === user.id));
+          // Fallback to local storage if not in DB yet (e.g. legacy/instant)
+          setIsCreator(!!local && local.hostUserId === user.id);
         }
       } catch (err) {
         console.error("Error verifying meeting access:", err);
@@ -151,7 +150,7 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
       }
     };
     fetchRole();
-  }, [meetingId, search.host, local?.hostUserId]);
+  }, [meetingId, local?.hostUserId]);
 
   const navigate = useNavigate();
   const expired = !!local?.expiresAt && Date.now() > local.expiresAt;
@@ -206,7 +205,7 @@ function Room({
   const isMobile = useIsMobile();
   const rtc = useWebRTC({ meetingId, identity, isCreator, privacy: initialPrivacy });
   const captions = useCaptions(identity.name);
-  const recording = useRecording(() => rtc.localStream);
+  const recording = useRecording(meetingId, rtc.localStream, rtc.peers);
   const timer = useMeetingTimer(rtc.isHost, rtc.channel);
 
   const [side, setSide] = useState<"chat" | "captions" | "people" | "qna" | "notes" | "whiteboard" | "polls" | "settings" | "agenda" | "breakout" | null>(null);
@@ -294,45 +293,64 @@ function Room({
     fetch();
   }, [meetingId]);
 
-  // Chat over realtime channel
+  // Track side panel in a ref so channel handlers don't need it as a dep
+  const sideRef = useRef(side);
+  useEffect(() => { sideRef.current = side; }, [side]);
+
+  // Chat + agenda + breakout over realtime channel
   useEffect(() => {
     const ch = rtc.channel.current;
     if (!ch) return;
-    const handler = ({ payload }: { payload: { from: string; text?: string; fileUrl?: string; fileName?: string; id: string; ts: number } }) => {
-      setChat((prev) => [...prev, { ...payload, self: false }]);
-      if (side !== "chat") setUnreadChat((u) => u + 1);
+    const chatHandler = ({ payload }: { payload: { from: string; text?: string; fileUrl?: string; fileName?: string; id: string; ts: number } }) => {
+      setChat((prev) => {
+        // Deduplicate by id to prevent tripling from re-subscriptions
+        if (prev.some((m) => m.id === payload.id)) return prev;
+        return [...prev, { ...payload, self: false }];
+      });
+      if (sideRef.current !== "chat") setUnreadChat((u) => u + 1);
     };
-    ch.on("broadcast", { event: "chat" }, handler);
-    ch.on("broadcast", { event: "agenda-update" }, ({ payload }) => {
+    const agendaHandler = ({ payload }: { payload: any }) => {
       setAgenda(payload);
-      if (side !== "agenda") setUnreadAgenda(u => u + 1);
-    });
-
-    ch.on("broadcast", { event: "breakout-config" }, ({ payload }) => {
+      if (sideRef.current !== "agenda") setUnreadAgenda(u => u + 1);
+    };
+    const breakoutHandler = ({ payload }: { payload: any }) => {
       setBreakoutRooms(payload);
       toast.info("Meeting breakout configuration updated.");
-    });
-
-    return () => { /* hook handles channel teardown */ };
-  }, [rtc.channel, side]);
+    };
+    ch.on("broadcast", { event: "chat" }, chatHandler);
+    ch.on("broadcast", { event: "agenda-update" }, agendaHandler);
+    ch.on("broadcast", { event: "breakout-config" }, breakoutHandler);
+    return () => {
+      ch.off("broadcast", { event: "chat" });
+      ch.off("broadcast", { event: "agenda-update" });
+      ch.off("broadcast", { event: "breakout-config" });
+    };
+    // Only re-run when the channel changes, NOT when `side` changes
+  }, [rtc.channel.current]);
 
   useEffect(() => { if (side === "chat") setUnreadChat(0); }, [side]);
   useEffect(() => { if (side === "qna") setUnreadQna(0); }, [side]);
   useEffect(() => { if (side === "notes") setUnreadNotes(0); }, [side]);
 
   const sendChat = (text: string) => {
-    const msg = { id: crypto.randomUUID(), from: identity.name, text, ts: Date.now() };
+    const msg = { id: uuidv4(), from: identity.name, text, ts: Date.now() };
     rtc.channel.current?.send({ type: "broadcast", event: "chat", payload: msg });
-    setChat((prev) => [...prev, { ...msg, self: true }]);
+    setChat((prev) => {
+      if (prev.some((m) => m.id === msg.id)) return prev;
+      return [...prev, { ...msg, self: true }];
+    });
   };
 
   const sendFile = useCallback((fileUrl: string, fileName: string, fileSize?: number) => {
-    const msg = { id: crypto.randomUUID(), from: identity.name, fileUrl, fileName, fileSize, ts: Date.now() };
+    const msg = { id: uuidv4(), from: identity.name, fileUrl, fileName, fileSize, ts: Date.now() };
     // Only broadcast small (<500KB) files over Supabase channel; large files arrive via P2P data channel
     if (!fileSize || fileSize <= 500 * 1024) {
       rtc.channel.current?.send({ type: "broadcast", event: "chat", payload: msg });
     }
-    setChat((prev) => [...prev, { ...msg, self: true }]);
+    setChat((prev) => {
+      if (prev.some((m) => m.id === msg.id)) return prev;
+      return [...prev, { ...msg, self: true }];
+    });
   }, [identity.name, rtc.channel]);
 
   // ---- P2P file chunk assembler ----
@@ -384,7 +402,10 @@ function Room({
             ts: Date.now(),
             self: false,
           };
-          setChat((prev) => [...prev, chatMsg]);
+          setChat((prev) => {
+            if (prev.some((m) => m.id === chatMsg.id)) return prev;
+            return [...prev, chatMsg];
+          });
           if (side !== "chat") setUnreadChat((u) => u + 1);
           toast(`📎 ${chatMsg.from} shared a file: ${transfer.fileName}`);
           delete incomingChunksRef.current[msg.id];
@@ -400,7 +421,7 @@ function Room({
 
   // Reactions
   const sendReaction = useCallback((emoji: string) => {
-    const r: Reaction = { id: crypto.randomUUID(), emoji, from: identity.name, ts: Date.now() };
+    const r: Reaction = { id: uuidv4(), emoji, from: identity.name, ts: Date.now() };
     setReactions((prev) => [...prev.slice(-30), r]);
     sendOnChannel("reaction", r);
   }, [identity.name, sendOnChannel]);
@@ -422,7 +443,7 @@ function Room({
 
   // Q&A
   const askQuestion = useCallback((text: string) => {
-    const q: Question = { id: crypto.randomUUID(), from: identity.name, text, ts: Date.now(), upvotes: [], answered: false };
+    const q: Question = { id: uuidv4(), from: identity.name, text, ts: Date.now(), upvotes: [], answered: false };
     setQuestions((prev) => [...prev, q]);
     sendOnChannel("qna", { kind: "ask", question: q });
   }, [identity.name, sendOnChannel]);
@@ -441,9 +462,20 @@ function Room({
     sendOnChannel("qna", { kind: "answered", id });
   }, [sendOnChannel]);
 
+  const answerQuestionTyped = useCallback((id: string, answer: string) => {
+    setQuestions((prev) => prev.map((q) => q.id === id ? { ...q, answered: true, hostAnswer: answer } : q));
+    sendOnChannel("qna", { kind: "answer-typed", id, answer });
+  }, [sendOnChannel]);
+
+  const answerQuestionVerbal = useCallback((id: string) => {
+    const q = questions.find(x => x.id === id);
+    setQuestions((prev) => prev.map((item) => item.id === id ? { ...item, answered: true } : item));
+    sendOnChannel("qna", { kind: "answer-verbal", id, from: q?.from || "User" });
+  }, [sendOnChannel, questions]);
+
   // Notes
   const shareNote = useCallback((draft: Omit<SharedNote, "id" | "ts" | "fromHost">) => {
-    const n: SharedNote = { ...draft, id: crypto.randomUUID(), ts: Date.now(), fromHost: identity.name };
+    const n: SharedNote = { ...draft, id: uuidv4(), ts: Date.now(), fromHost: identity.name };
     setNotes((prev) => [n, ...prev]);
     sendOnChannel("note", n);
   }, [identity.name, sendOnChannel]);
@@ -463,9 +495,9 @@ function Room({
   // Polls
   const createPoll = useCallback((question: string, options: string[]) => {
     const poll: Poll = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       question,
-      options: options.map(o => ({ id: crypto.randomUUID(), text: o, votes: [] })),
+      options: options.map(o => ({ id: uuidv4(), text: o, votes: [] })),
       active: true,
     };
     setPolls(prev => [poll, ...prev]);
@@ -500,7 +532,9 @@ function Room({
     }
   }, [rtc.status, rtc.isHost, meetingId]);
 
-  // ---- Subscribe to all the new broadcast events on the realtime channel ----
+  // Subscribe to all realtime broadcast events on the channel.
+  // IMPORTANT: `side` is read via sideRef so this effect only runs once
+  // per channel connection — preventing duplicate listener accumulation.
   useEffect(() => {
     const ch = rtc.channel.current;
     if (!ch) return;
@@ -514,10 +548,39 @@ function Room({
       if (payload.raised) toast(`✋ ${payload.name} raised their hand`);
     });
 
-    ch.on("broadcast", { event: "qna" }, ({ payload }: { payload: { kind: "ask"; question: Question } | { kind: "upvote"; id: string; by: string } | { kind: "answered"; id: string } }) => {
+    ch.on("broadcast", { event: "screenshare-request" }, ({ payload }: { payload: { from: string; name: string } }) => {
+      if (!rtc.isHost) return;
+      toast(`🖥️ ${payload.name} wants to share their screen`, {
+        action: {
+          label: "Allow",
+          onClick: () => {
+            sendOnChannel("screenshare-response", { to: payload.from, allowed: true });
+          }
+        },
+        cancel: {
+          label: "Deny",
+          onClick: () => {
+            sendOnChannel("screenshare-response", { to: payload.from, allowed: false });
+          }
+        },
+        duration: 10000
+      });
+    });
+
+    ch.on("broadcast", { event: "screenshare-response" }, ({ payload }: { payload: { to: string; allowed: boolean } }) => {
+      if (payload.to !== rtc.selfId) return;
+      if (payload.allowed) {
+        toast.success("Host allowed screen sharing");
+        rtc.startScreenShare();
+      } else {
+        toast.error("Host denied screen sharing permission");
+      }
+    });
+
+    ch.on("broadcast", { event: "qna" }, ({ payload }: { payload: { kind: "ask"; question: Question } | { kind: "upvote"; id: string; by: string } | { kind: "answered"; id: string } | { kind: "answer-typed"; id: string; answer: string } | { kind: "answer-verbal"; id: string; from: string } }) => {
       if (payload.kind === "ask") {
         setQuestions((prev) => prev.some((q) => q.id === payload.question.id) ? prev : [...prev, payload.question]);
-        if (side !== "qna") setUnreadQna((u) => u + 1);
+        if (sideRef.current !== "qna") setUnreadQna((u) => u + 1);
       } else if (payload.kind === "upvote") {
         setQuestions((prev) => prev.map((q) => {
           if (q.id !== payload.id) return q;
@@ -526,12 +589,18 @@ function Room({
         }));
       } else if (payload.kind === "answered") {
         setQuestions((prev) => prev.map((q) => q.id === payload.id ? { ...q, answered: true } : q));
+      } else if (payload.kind === "answer-typed") {
+        setQuestions((prev) => prev.map((q) => q.id === payload.id ? { ...q, answered: true, hostAnswer: payload.answer } : q));
+        toast.info("Host answered a question in Q&A");
+      } else if (payload.kind === "answer-verbal") {
+        setQuestions((prev) => prev.map((q) => q.id === payload.id ? { ...q, answered: true } : q));
+        toast(`🎙️ Host is answering "${payload.from}'s" question verbally.`);
       }
     });
 
     ch.on("broadcast", { event: "note" }, ({ payload }: { payload: SharedNote }) => {
       setNotes((prev) => prev.some((n) => n.id === payload.id) ? prev : [payload, ...prev]);
-      if (side !== "notes") setUnreadNotes((u) => u + 1);
+      if (sideRef.current !== "notes") setUnreadNotes((u) => u + 1);
       toast.success(`📄 ${payload.fromHost} shared a note: ${payload.title}`);
     });
 
@@ -547,7 +616,7 @@ function Room({
     ch.on("broadcast", { event: "poll" }, ({ payload }: { payload: any }) => {
       if (payload.kind === "create") {
         setPolls(prev => [payload.poll, ...prev]);
-        if (side !== "polls") setUnreadPolls(u => u + 1);
+        if (sideRef.current !== "polls") setUnreadPolls(u => u + 1);
         toast("📊 New poll: " + payload.poll.question);
       } else if (payload.kind === "vote") {
         setPolls(prev => prev.map(p => {
@@ -571,8 +640,20 @@ function Room({
         ? `⏺ ${payload.name} started recording the meeting`
         : `⏹ ${payload.name} stopped recording`);
     });
-    // hook handles channel teardown
-  }, [rtc.channel, side]);
+
+    return () => {
+      // Clean up all listeners when the channel changes
+      ch.off("broadcast", { event: "reaction" });
+      ch.off("broadcast", { event: "hand" });
+      ch.off("broadcast", { event: "qna" });
+      ch.off("broadcast", { event: "note" });
+      ch.off("broadcast", { event: "whiteboard" });
+      ch.off("broadcast", { event: "poll" });
+      ch.off("broadcast", { event: "rec" });
+    };
+    // Intentionally NOT including `side` — we read it via sideRef to avoid
+    // re-registering listeners on every panel switch (that's what caused tripling).
+  }, [rtc.channel.current]);
 
   // ---- Join / leave toasts ----
   useEffect(() => {
@@ -967,6 +1048,8 @@ function Room({
                   onAsk={askQuestion}
                   onUpvote={upvoteQuestion}
                   onMarkAnswered={markAnswered}
+                  onAnswerTyped={answerQuestionTyped}
+                  onAnswerVerbal={answerQuestionVerbal}
                 />
               </div>
             )}
@@ -1036,7 +1119,19 @@ function Room({
             icon={rtc.audioOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />} />
           <Ctl on={rtc.videoOn} onClick={rtc.toggleVideo} label={rtc.videoOn ? "Camera off" : "Camera on"}
             icon={rtc.videoOn ? <VideoIcon className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />} />
-          <Ctl on={rtc.isScreenSharing} onClick={rtc.isScreenSharing ? rtc.stopScreenShare : rtc.startScreenShare}
+          <Ctl on={rtc.isScreenSharing} 
+            onClick={() => {
+              if (rtc.isScreenSharing) {
+                rtc.stopScreenShare();
+              } else {
+                if (rtc.privacy === "private" && !rtc.isHost) {
+                  toast.info("Requesting permission to share screen...");
+                  sendOnChannel("screenshare-request", { from: rtc.selfId, name: identity.name });
+                } else {
+                  rtc.startScreenShare();
+                }
+              }
+            }}
             label={rtc.isScreenSharing ? "Stop sharing" : "Share screen"}
             icon={rtc.isScreenSharing ? <MonitorX className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
           />
@@ -1087,15 +1182,15 @@ function Room({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="glass border-glass-border w-64 p-2 space-y-1">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Collaboration</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Collaboration tools</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setSide("agenda")} className="rounded-xl gap-3">
                 <LayoutGrid className="h-4 w-4" /> Agenda {unreadAgenda > 0 && <span className="ml-auto bg-primary text-white text-[10px] px-1.5 rounded-full">{unreadAgenda}</span>}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSide("whiteboard")} className="rounded-xl gap-3">
-                <Presentation className="h-4 w-4" /> Whiteboard
+                <Presentation className="h-4 w-4" /> Interactive whiteboard
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSide("notes")} className="rounded-xl gap-3">
-                <FileText className="h-4 w-4" /> Shared Notes {unreadNotes > 0 && <span className="ml-auto bg-primary text-white text-[10px] px-1.5 rounded-full">{unreadNotes}</span>}
+                <FileText className="h-4 w-4" /> Shared notes {unreadNotes > 0 && <span className="ml-auto bg-primary text-white text-[10px] px-1.5 rounded-full">{unreadNotes}</span>}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSide("polls")} className="rounded-xl gap-3">
                 <BarChart3 className="h-4 w-4" /> Polls {unreadPolls > 0 && <span className="ml-auto bg-primary text-white text-[10px] px-1.5 rounded-full">{unreadPolls}</span>}
@@ -1106,36 +1201,40 @@ function Room({
 
               <DropdownMenuSeparator className="bg-glass-border mx-[-8px]" />
               
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Settings & Tools</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Settings & tools</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setSide("breakout")} className="rounded-xl gap-3">
-                <Building2 className="h-4 w-4" /> Breakout Rooms
+                <Building2 className="h-4 w-4" /> Breakout rooms
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => captions.toggle()} className="rounded-xl gap-3">
-                <Captions className="h-4 w-4" /> {captions.enabled ? "Disable Captions" : "Enable Captions"}
+                <Captions className="h-4 w-4" /> {captions.enabled ? "Disable captions" : "Enable captions"}
               </DropdownMenuItem>
               {rtc.isHost && (
                 <>
-                  <DropdownMenuItem onClick={toggleRecording} className="rounded-xl gap-3">
-                    {recording.recording ? <StopCircle className="h-4 w-4 text-destructive" /> : <Circle className="h-4 w-4 text-primary" />}
-                    {recording.recording ? "Stop Recording" : "Record Meeting"}
+                  <DropdownMenuItem onClick={recording.recording ? recording.stop : recording.start} disabled={recording.uploading} className="rounded-xl gap-3">
+                    {recording.uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      recording.recording ? <StopCircle className="h-4 w-4 text-destructive" /> : <Circle className="h-4 w-4 text-primary" />
+                    )}
+                    {recording.uploading ? "Saving..." : recording.recording ? "Stop recording" : "Record meeting"}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-glass-border mx-[-8px]" />
-                  <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Host Controls</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5">Host controls</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => rtc.setLocked(!rtc.locked)} className="rounded-xl gap-3">
                     {rtc.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                    {rtc.locked ? "Unlock Meeting" : "Lock Meeting"}
+                    {rtc.locked ? "Unlock meeting" : "Lock meeting"}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={rtc.muteEveryone} className="rounded-xl gap-3">
-                    <MicOffIcon className="h-4 w-4" /> Mute Everyone
+                    <MicOffIcon className="h-4 w-4" /> Mute everyone
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive rounded-xl gap-3" onClick={rtc.endForAll}>
-                    <PhoneOff className="h-4 w-4" /> End for Everyone
+                    <PhoneOff className="h-4 w-4" /> End for everyone
                   </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator className="bg-glass-border mx-[-8px]" />
               <DropdownMenuItem onClick={() => setSide("settings")} className="rounded-xl gap-3">
-                <SettingsIcon className="h-4 w-4" /> Device Settings
+                <SettingsIcon className="h-4 w-4" /> Device settings
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

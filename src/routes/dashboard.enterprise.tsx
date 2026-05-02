@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+import { Loader } from "@/components/Loader";
+
 function EnterpriseComponent() {
   return (
     <RequireAuth>
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/dashboard/enterprise")({
   component: EnterpriseComponent,
 });
 
-type Org = { id: string; name: string; settings: any };
+type Org = { id: string; name: string; settings: any; admin_passcode_hash?: string };
 type Member = { id: string; role: string; user: { email: string; display_name: string } };
 
 import { Input } from "@/components/ui/input";
@@ -39,12 +41,17 @@ function Page() {
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const org = orgs.find(o => o.id === activeOrgId) || null;
   
   const [isCreatingOrg, setIsCreatingOrg] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
   const [newOrgDomain, setNewOrgDomain] = useState("");
   const [newOrgBillingEmail, setNewOrgBillingEmail] = useState("");
   const [newOrgIndustry, setNewOrgIndustry] = useState("");
+  const [showSetupPasscode, setShowSetupPasscode] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [unlockPasscode, setUnlockPasscode] = useState("");
+  const [showUnlockSuccess, setShowUnlockSuccess] = useState(false);
 
   const fetchOrgs = async () => {
     if (!user) return;
@@ -80,12 +87,22 @@ function Page() {
   };
 
   useEffect(() => {
+    setIsUnlocked(false);
+    setUnlockPasscode("");
+  }, [activeOrgId]);
+
+  useEffect(() => {
     fetchOrgs();
   }, [user]);
 
   useEffect(() => {
     fetchMembersForActiveOrg();
-  }, [activeOrgId]);
+    if (org && !org.admin_passcode_hash) {
+      setShowSetupPasscode(true);
+    } else {
+      setShowSetupPasscode(false);
+    }
+  }, [activeOrgId, org?.admin_passcode_hash]);
 
   const createOrg = async () => {
     if (!newOrgName.trim() || !user) return;
@@ -140,12 +157,10 @@ function Page() {
   if (loading && orgs.length === 0) return (
     <DashboardShell title="Enterprise">
       <div className="h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader label="Synchronizing organizations" />
       </div>
     </DashboardShell>
   );
-
-  const org = orgs.find(o => o.id === activeOrgId) || null;
 
   if (!activeOrgId) {
     return (
@@ -366,6 +381,38 @@ function Page() {
               <Switch />
             </div>
             <div className="dash-card p-6">
+              <h3 className="font-bold flex items-center gap-2 mb-2"><KeyRound className="h-5 w-5 text-primary" /> Join Passcode</h3>
+              <p className="text-sm text-muted-foreground mb-4">Set a mandatory passcode for new members joining {org.name}.</p>
+              <div className="flex gap-2 max-w-sm">
+                <Input 
+                  id="org-passcode"
+                  type="password"
+                  placeholder="New passcode" 
+                  className="bg-card/40 h-11 rounded-xl" 
+                />
+                <Button 
+                  onClick={async () => {
+                    const pass = (document.getElementById("org-passcode") as HTMLInputElement)?.value;
+                    if (!pass) return;
+                    toast.loading("Updating passcode...", { id: "passcode" });
+                    const { error } = await supabase
+                      .from("organizations")
+                      .update({ admin_passcode_hash: pass }) // Using admin_passcode_hash as the general org passcode for now
+                      .eq("id", org.id);
+                    if (error) toast.error("Failed to update", { id: "passcode" });
+                    else {
+                      toast.success("Passcode updated", { id: "passcode" });
+                      (document.getElementById("org-passcode") as HTMLInputElement).value = "";
+                    }
+                  }}
+                  className="rounded-xl font-bold bg-primary text-white h-11"
+                >
+                  Update
+                </Button>
+              </div>
+            </div>
+
+            <div className="dash-card p-6">
               <h3 className="font-bold flex items-center gap-2 mb-2"><KeyRound className="h-5 w-5 text-primary" /> SAML Single Sign-On</h3>
               <p className="text-sm text-muted-foreground mb-4">Configure Okta, Azure AD, or Google Workspace SSO.</p>
               <Button variant="outline" className="rounded-xl border-primary/20 hover:bg-primary/10">Configure SSO</Button>
@@ -466,8 +513,118 @@ function Page() {
       onBackToOrgs={() => setActiveOrgId(null)}
     >
       <div className="px-4 sm:px-6 py-6 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {renderTabContent()}
+        {!isUnlocked && org?.admin_passcode_hash ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-8 animate-in zoom-in-95 duration-500">
+            <div className="h-20 w-20 rounded-[2.5rem] bg-primary/10 text-primary grid place-items-center shadow-glow">
+              <KeyRound className="h-10 w-10" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-black">Unlock {org.name}</h2>
+              <p className="text-muted-foreground text-sm">Enter the organization passcode to continue management.</p>
+            </div>
+            <div className="w-full max-w-xs space-y-4">
+              <Input 
+                type="password"
+                value={unlockPasscode}
+                onChange={(e) => setUnlockPasscode(e.target.value)}
+                placeholder="••••••••"
+                onKeyDown={(e) => e.key === "Enter" && unlockPasscode === org.admin_passcode_hash && setIsUnlocked(true)}
+                className="bg-card/40 h-14 rounded-2xl text-center text-xl tracking-[0.3em] font-mono border-glass-border focus:ring-primary/20"
+              />
+            <Button 
+                onClick={() => {
+                  if (unlockPasscode === org?.admin_passcode_hash) {
+                    setShowUnlockSuccess(true);
+                    toast.success("Access granted", { icon: "🔐" });
+                    setTimeout(() => {
+                      setIsUnlocked(true);
+                      setShowUnlockSuccess(false);
+                    }, 1500);
+                  } else {
+                    toast.error("Invalid passcode");
+                  }
+                }}
+                disabled={showUnlockSuccess}
+                className="w-full h-14 bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow rounded-2xl font-bold text-lg"
+              >
+                {showUnlockSuccess ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Unlock <ChevronRight className="h-5 w-5 ml-2" /></>}
+              </Button>
+              <Button variant="ghost" onClick={() => setActiveOrgId(null)} disabled={showUnlockSuccess} className="w-full rounded-xl text-muted-foreground">
+                Switch Organization
+              </Button>
+            </div>
+            
+            {showUnlockSuccess && (
+              <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-md grid place-items-center animate-in fade-in duration-300">
+                <div className="text-center animate-in zoom-in-95 duration-500">
+                  <div className="h-20 w-20 rounded-full bg-brand-green/20 text-brand-green grid place-items-center mx-auto mb-6">
+                    <ShieldCheck className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-2xl font-black text-brand-green">Access Granted</h3>
+                  <p className="text-muted-foreground text-sm mt-2 font-medium">Entering management hub...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          renderTabContent()
+        )}
       </div>
+
+      {showSetupPasscode && (
+        <div className="fixed inset-0 z-[60] grid place-items-center px-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-500">
+          <div className="glass rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl border-brand-green/30 text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="h-20 w-20 rounded-[2rem] bg-brand-green/10 text-brand-green grid place-items-center mx-auto mb-6">
+              <ShieldCheck className="h-10 w-10" />
+            </div>
+            
+            <h2 className="text-2xl font-black mb-3">Secure your Organization</h2>
+            <p className="text-muted-foreground text-sm mb-8">
+              To ensure the security of {org?.name}, please set a mandatory join passcode for all new members.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="space-y-2 text-left">
+                <Label className="text-[11px] uppercase tracking-widest font-bold ml-1">New Join Passcode</Label>
+                <Input 
+                  id="setup-org-passcode"
+                  type="password"
+                  placeholder="Create a strong passcode" 
+                  className="bg-card/40 h-14 rounded-2xl text-center text-xl tracking-[0.3em] font-mono" 
+                />
+              </div>
+              
+              <Button 
+                onClick={async () => {
+                  const pass = (document.getElementById("setup-org-passcode") as HTMLInputElement)?.value;
+                  if (!pass) {
+                    toast.error("Please enter a passcode");
+                    return;
+                  }
+                  toast.loading("Securing organization...", { id: "passcode-setup" });
+                  const { error } = await supabase
+                    .from("organizations")
+                    .update({ admin_passcode_hash: pass })
+                    .eq("id", org?.id);
+                  
+                  if (error) {
+                    toast.error("Setup failed", { id: "passcode-setup" });
+                  } else {
+                    toast.success("Organization secured!", { id: "passcode-setup" });
+                    setShowSetupPasscode(false);
+                    fetchOrgs();
+                  }
+                }}
+                className="w-full h-14 bg-brand-green hover:bg-brand-green/90 text-white border-0 shadow-brand rounded-2xl font-bold text-lg"
+              >
+                Set Passcode & Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </OrgShell>
   );
 }

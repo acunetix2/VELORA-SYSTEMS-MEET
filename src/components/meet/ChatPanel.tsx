@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { uuidv4 } from "@/lib/meeting";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Paperclip, X, FileText, Image as ImageIcon, Download } from "lucide-react";
@@ -57,7 +58,7 @@ export function ChatPanel({ messages, onSend, onSendFile, dataChannels = [] }: P
       return;
     }
 
-    const id = crypto.randomUUID();
+    const id = uuidv4();
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
     const arrayBuffer = await file.arrayBuffer();
 

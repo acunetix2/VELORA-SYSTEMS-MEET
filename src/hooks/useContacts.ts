@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { uuidv4 } from "@/lib/meeting";
 
 export type Contact = { id: string; name: string; email: string };
 const KEY = "velora:contacts";
@@ -25,7 +26,7 @@ export function useContacts() {
   }, []);
 
   const add = useCallback((c: Omit<Contact, "id">) => {
-    const next = [{ ...c, id: crypto.randomUUID() }, ...load()];
+    const next = [{ ...c, id: uuidv4() }, ...load()];
     save(next); setItems(next);
     window.dispatchEvent(new CustomEvent("velora:contacts"));
   }, []);
