@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import {
   Key, Copy, RefreshCw, Shield, Webhook,
   BookOpen, Zap, Clock, AlertTriangle, Eye, EyeOff,
-  CheckCircle2, ArrowRight, Code2, FlaskConical, ExternalLink
+  CheckCircle2, ArrowRight, Code2, FlaskConical, ExternalLink,
+  BrainCircuit
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -42,6 +43,7 @@ const KEYS_STORE = "velora:api_keys";
 function DeveloperPage() {
   const [keys, setKeys] = useState<StoredKey[]>([]);
   const [newKeyName, setNewKeyName] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookSaved, setWebhookSaved] = useState(false);
   const [rateLimitUsed] = useState(Math.floor(Math.random() * 800));
 

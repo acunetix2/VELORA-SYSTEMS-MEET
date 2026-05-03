@@ -3,8 +3,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AiAssistant } from "@/components/dashboard/AiAssistant";
+import { EllaIcon } from "@/components/EllaIcon";
 import { 
   BrainCircuit, Video, MonitorUp, MessagesSquare, ShieldCheck, Zap, Lock,
   ArrowRight, MousePointerClick, Link2, Users, Mic, Globe2,
@@ -26,6 +27,97 @@ export const Route = createFileRoute("/")({
   }),
   component: Landing,
 });
+
+function AnimatedChatMockup() {
+  const [typedText, setTypedText] = useState("");
+  const fullText = "Here are the key points from the discussion:\n• Launch moved to Q3\n• Need 2 more backend engineers\n• API documentation needs review";
+  const [phase, setPhase] = useState<"thinking" | "typing" | "done">("thinking");
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    let typeInterval: ReturnType<typeof setInterval>;
+    
+    const startCycle = () => {
+      setTypedText("");
+      setPhase("thinking");
+      
+      // Wait 2 seconds in thinking phase
+      timeout = setTimeout(() => {
+        setPhase("typing");
+        let currentIndex = 0;
+        
+        typeInterval = setInterval(() => {
+          if (currentIndex <= fullText.length) {
+            setTypedText(fullText.slice(0, currentIndex));
+            currentIndex++;
+          } else {
+            clearInterval(typeInterval);
+            setPhase("done");
+            
+            // Wait 6 seconds before restarting the whole process
+            timeout = setTimeout(startCycle, 6000);
+          }
+        }, 35); // typing speed
+      }, 2000);
+    };
+
+    startCycle();
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(typeInterval);
+    };
+  }, []);
+
+  return (
+    <div className="w-full h-full bg-card/60 backdrop-blur-xl rounded-xl border border-glass-border/40 flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-glass-border/40 flex items-center gap-3 bg-card/40">
+        <div className="h-8 w-8 rounded-lg bg-primary/10 grid place-items-center shadow-glow border border-primary/20">
+          <EllaIcon />
+        </div>
+        <div>
+          <div className="text-xs font-bold text-foreground flex items-center gap-2">
+            Velora AI <span className="flex h-2 w-2 rounded-full bg-brand-green animate-pulse"></span>
+          </div>
+          <div className="text-[10px] text-muted-foreground">v1.0.0-Core</div>
+        </div>
+      </div>
+      <div className="p-4 space-y-5 flex-1 overflow-y-auto">
+        {/* User Message */}
+        <div className="flex gap-3 flex-row-reverse">
+          <div className="h-7 w-7 rounded-md bg-gradient-brand shrink-0 grid place-items-center text-[10px] font-bold text-white shadow-glow">
+            YO
+          </div>
+          <div className="bg-primary/20 text-foreground text-xs p-3 rounded-2xl rounded-tr-sm border border-primary/20 shadow-sm max-w-[85%]">
+            Can you summarize our discussion?
+          </div>
+        </div>
+        
+        {/* AI Response */}
+        <div className="flex gap-3">
+          <div className="h-7 w-7 rounded-md bg-primary/10 shrink-0 flex items-center justify-center border border-primary/20 shadow-glow">
+            <div className="animate-pulse flex items-center justify-center scale-90">
+              <EllaIcon />
+            </div>
+          </div>
+          <div className="bg-card/80 text-foreground text-xs p-3 rounded-2xl rounded-tl-sm border border-glass-border/30 shadow-sm min-h-[40px] max-w-[85%] whitespace-pre-wrap leading-relaxed">
+            {typedText}
+            {phase === "typing" && (
+              <span className="inline-block w-1.5 h-3 ml-1 align-middle bg-primary animate-pulse" />
+            )}
+            {phase === "thinking" && (
+              <div className="flex items-center gap-1.5 h-3">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Landing() {
   const { user } = useAuth();
@@ -71,21 +163,21 @@ function Landing() {
           <div className="glass rounded-3xl p-2 sm:p-3 shadow-elegant animate-float">
             <div className="rounded-2xl overflow-hidden bg-card/40 aspect-[16/9] grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 p-2 sm:p-3">
               {[
-                { name: "Maya Chen", initial: "M" },
-                { name: "Diego Rivera", initial: "D" },
-                { name: "Aisha Khan", initial: "A" },
-                { name: "You", initial: "Y" },
+                { name: "Maya Chen", initial: "M", gradient: "from-blue-500 to-indigo-500", text: "text-blue-500" },
+                { name: "Diego Rivera", initial: "D", gradient: "from-emerald-500 to-teal-500", text: "text-emerald-500" },
+                { name: "Aisha Khan", initial: "A", gradient: "from-amber-500 to-orange-500", text: "text-amber-500" },
+                { name: "You", initial: "Y", gradient: "bg-gradient-primary", text: "text-primary" },
               ].map((p, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden glass">
-                  <div className="absolute inset-0 bg-gradient-primary opacity-25" />
+                  <div className={`absolute inset-0 ${p.gradient.startsWith('bg-') ? p.gradient : `bg-gradient-to-br ${p.gradient}`} opacity-25`} />
                   <div className="absolute inset-0 grid place-items-center">
-                    <div className="h-12 w-12 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full bg-gradient-primary grid place-items-center font-display text-xl sm:text-3xl md:text-4xl font-semibold text-primary-foreground shadow-glow">
+                    <div className={`h-12 w-12 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full ${p.gradient.startsWith('bg-') ? p.gradient : `bg-gradient-to-br ${p.gradient}`} grid place-items-center font-display text-xl sm:text-3xl md:text-4xl font-semibold text-white shadow-glow`}>
                       {p.initial}
                     </div>
                   </div>
                   <div className="absolute bottom-1.5 left-1.5 right-1.5 sm:bottom-2 sm:left-2 sm:right-2 flex items-center justify-between">
                     <span className="text-[10px] sm:text-xs glass px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md truncate">{p.name}</span>
-                    <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+                    <Mic className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${p.text}`} />
                   </div>
                 </div>
               ))}
@@ -98,27 +190,47 @@ function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         {/* Trusted-by strip */}
         <div className="mb-14 sm:mb-20">
-          <p className="text-center text-xs uppercase tracking-[0.18em] text-muted-foreground mb-6">
-            Trusted by teams at fast-growing organizations
+          <p className="text-center text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-3">
+            Our Global Partners
           </p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 items-center max-w-5xl mx-auto opacity-80">
-            {[
-              { name: "Northwind", initials: "NW" },
-              { name: "Helix Labs", initials: "HX" },
-              { name: "Atlas Studio", initials: "AS" },
-              { name: "Quanta", initials: "QT" },
-              { name: "Fielder", initials: "FD" },
-              { name: "Verdant", initials: "VD" },
-            ].map((o) => (
-              <div key={o.name} className="glass rounded-xl py-4 grid place-items-center transition-smooth hover:opacity-100 hover:shadow-glow group">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-md bg-gradient-brand grid place-items-center text-[10px] font-bold text-primary-foreground">
-                    {o.initials}
+          <h2 className="text-center text-xl sm:text-2xl font-semibold text-foreground/90 mb-10">
+            Powering collaboration for world-class teams
+          </h2>
+          <div className="overflow-hidden relative max-w-5xl mx-auto opacity-80" style={{ maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)' }}>
+            <style>{`
+              @keyframes scrollRightToLeft {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+              }
+            `}</style>
+            <div className="flex w-max items-center gap-6 sm:gap-10 pb-4 hover:[animation-play-state:paused]" style={{ animation: 'scrollRightToLeft 30s linear infinite' }}>
+              {[
+                { name: "Northwind", initials: "NW" },
+                { name: "Helix Labs", initials: "HL" },
+                { name: "Atlas Studio", initials: "AS" },
+                { name: "Quanta", initials: "QA" },
+                { name: "Fielder", initials: "FD" },
+                { name: "Verdant", initials: "VD" },
+                { name: "SkyLine", initials: "SL" },
+                // Duplicate for seamless loop
+                { name: "Northwind", initials: "NW" },
+                { name: "Helix Labs", initials: "HL" },
+                { name: "Atlas Studio", initials: "AS" },
+                { name: "Quanta", initials: "QA" },
+                { name: "Fielder", initials: "FD" },
+                { name: "Verdant", initials: "VD" },
+                { name: "SkyLine", initials: "SL" },
+              ].map((o, i) => (
+                <div key={i} className="glass rounded-xl py-4 px-6 shrink-0 flex items-center justify-center transition-smooth hover:opacity-100 hover:shadow-glow group cursor-default">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-md bg-gradient-brand grid place-items-center text-xs font-bold text-primary-foreground">
+                      {o.initials}
+                    </div>
+                    <span className="font-display font-semibold text-sm tracking-tight text-foreground/80 group-hover:text-foreground">{o.name}</span>
                   </div>
-                  <span className="font-display font-semibold text-sm tracking-tight text-foreground/80 group-hover:text-foreground">{o.name}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -153,6 +265,55 @@ function Landing() {
         </div>
       </section>
 
+      {/* Velora AI Feature */}
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="glass rounded-3xl overflow-hidden relative border border-glass-border shadow-2xl p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 pointer-events-none" />
+          
+          <div className="flex-1 space-y-6 relative z-10">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary border border-primary/30 shadow-glow">
+              <Sparkles className="h-3 w-3" />
+              Introducing Velora AI
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-tight leading-[1.1]">
+              Your meeting <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">intelligence hub</span>
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+              Meet the industry's first fully unbound, surface-blended AI companion. Velora AI works silently in the background, transforming your live conversations into actionable intelligence, structured notes, and deep technical insights.
+            </p>
+            
+            <ul className="space-y-4 pt-4">
+              {[
+                "Unlimited context window with 4096-token analysis mode",
+                "Automated meeting summaries, action items, and sentiment tracking",
+                "Deep-linked chat persistence for continuous collaboration",
+                "Private, secure, and end-to-end encrypted processing"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-foreground/90 font-medium">
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="pt-6">
+              <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow border-0 h-12 px-8 rounded-xl font-bold">
+                <Link to={ctaTo} {...(!user ? { search: { mode: "signup" as const } } : {})}>
+                  Experience Velora AI
+                </Link>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex-1 w-full lg:w-auto relative z-10">
+            <div className="relative aspect-[4/3] rounded-2xl glass p-1 shadow-elegant animate-float" style={{ animationDuration: '6s' }}>
+               <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl -z-10 rounded-full" />
+               <AnimatedChatMockup />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Comparison */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20">
         <div className="text-center max-w-2xl mx-auto mb-10">
@@ -163,23 +324,23 @@ function Landing() {
           <div className="grid grid-cols-4 text-sm font-semibold border-b border-glass-border">
             <div className="p-4">Capability</div>
             <div className="p-4 text-center text-primary">Velora</div>
-            <div className="p-4 text-center text-muted-foreground">Legacy A</div>
-            <div className="p-4 text-center text-muted-foreground">Legacy B</div>
+            <div className="p-4 text-center text-muted-foreground">Google Meet</div>
+            <div className="p-4 text-center text-muted-foreground">Zoom</div>
           </div>
           {[
-            ["Instant join, no install", true, true, true],
-            ["Pin + auto-grid that scales", true, false, true],
-            ["Built-in lobby & host controls", true, true, true],
-            ["Live captions on-device (no server)", true, false, false],
-            ["Network-aware low-bandwidth mode", true, false, false],
-            ["Always-on encryption", true, true, true],
-            ["Free for unlimited meetings (beta)", true, false, false],
+            ["Free Tier Meeting Limit", "Unlimited", "60 mins", "40 mins"],
+            ["Free Tier Participants", "Up to 100", "Up to 100", "Up to 100"],
+            ["Required Installation", "None (Browser)", "None (Browser)", "App Download"],
+            ["End-to-End Encryption", "Default (Always)", "Not Default", "Not Default"],
+            ["Built-in AI Assistant", "Included Free", "Paid Add-on", "Paid Add-on"],
+            ["On-Device AI Processing", "Yes", "No (Cloud)", "No (Cloud)"],
+            ["Low-Bandwidth Mode", "Auto-Adaptive", "Basic", "Basic"],
           ].map(([cap, a, b, c], i) => (
-            <div key={i} className="grid grid-cols-4 text-sm border-b border-glass-border/60 last:border-0">
-              <div className="p-4">{cap}</div>
-              <div className="p-4 text-center">{a ? <CheckCircle2 className="h-4 w-4 text-primary mx-auto" /> : <span className="text-muted-foreground">—</span>}</div>
-              <div className="p-4 text-center">{b ? <CheckCircle2 className="h-4 w-4 text-muted-foreground mx-auto" /> : <span className="text-muted-foreground">—</span>}</div>
-              <div className="p-4 text-center">{c ? <CheckCircle2 className="h-4 w-4 text-muted-foreground mx-auto" /> : <span className="text-muted-foreground">—</span>}</div>
+            <div key={i} className="grid grid-cols-4 text-sm border-b border-glass-border/60 last:border-0 hover:bg-muted/10 transition-colors">
+              <div className="p-4 flex items-center font-medium">{cap}</div>
+              <div className="p-4 text-center font-semibold text-primary flex items-center justify-center">{a}</div>
+              <div className="p-4 text-center text-muted-foreground flex items-center justify-center">{b}</div>
+              <div className="p-4 text-center text-muted-foreground flex items-center justify-center">{c}</div>
             </div>
           ))}
         </div>
@@ -213,10 +374,10 @@ function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-12">
         <div className="glass rounded-3xl p-8 sm:p-10 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {[
-            { n: "99.9%", l: "service uptime" },
-            { n: "E2EE", l: "privacy by design" },
-            { n: "WebRTC", l: "industry standard" },
-            { n: "Chrome/Edge", l: "native support" },
+            { n: "No", l: "time limits" },
+            { n: "Zero", l: "downloads" },
+            { n: "P2P", l: "direct routing" },
+            { n: "Free", l: "core features" },
           ].map((s) => (
             <div key={s.l}>
               <p className="text-3xl sm:text-4xl font-semibold text-gradient">{s.n}</p>
@@ -234,9 +395,9 @@ function Landing() {
         </div>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { q: "Switched our entire org. Calls just work — even on hotel Wi-Fi.", a: "Sara K., COO" },
-            { q: "The pin and auto-grid is what every product manager dreams of.", a: "Marc D., Head of Design" },
-            { q: "Dead simple to invite clients. They never ask 'do I need an app?' anymore.", a: "Lina H., Solo consultant" },
+            { q: "The meeting quality is solid. Having no installs makes hopping on calls with external partners much less painful.", a: "Alex T., Product Manager" },
+            { q: "Appreciate the clean UI and the built-in AI assistant. It doesn't use as much CPU as other apps we've tried.", a: "David M., Software Engineer" },
+            { q: "Very straightforward. I send a link, my clients click it, and we're talking. No troubleshooting required.", a: "Sarah L., Freelancer" },
           ].map((t) => (
             <figure key={t.a} className="glass rounded-2xl p-5">
               <div className="flex gap-0.5 text-primary mb-2">

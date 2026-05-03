@@ -19,6 +19,9 @@ export type Profile = {
   website: string | null;
   linkedin: string | null;
   github: string | null;
+  ai_persona: string | null;
+  ai_context: string | null;
+  ai_voice_enabled: boolean | null;
   updated_at: string;
 };
 

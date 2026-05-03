@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { messages } = await req.json();
+    const { messages, mode } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -29,7 +29,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Processing AI request with ${messages.length} messages...`);
+    const isUnbound = mode === "unbound";
+    
+    // Process messages to handle multi-modal content
+    let hasImage = false;
+    const processedMessages = messages.map(m => {
+      if (m.image_url) {
+        hasImage = true;
+        return {
+          role: m.role,
+          content: [
+            { type: "text", text: m.content || "Analyze this image." },
+            { type: "image_url", image_url: { url: m.image_url } }
+          ]
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
+
+    // Use higher performance models for unbound mode
+    const model = hasImage 
+      ? "llama-3.2-11b-vision-preview" 
+      : (isUnbound ? "llama-3.3-70b-versatile" : "llama-3.3-70b-versatile");
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -38,47 +59,35 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: model,
         messages: [
           { 
             role: "system", 
-            content: `You are Velora AI, the official permanent assistant for Velora Meet. You help users with meeting scheduling, classroom management, and technical troubleshooting. 
+            content: `You are Velora AI, the ${isUnbound ? "Unbound Intelligence Hub" : "Assistant"} for Velora Meet. 
 
-            CORE PRODUCT KNOWLEDGE:
-            - Velora Meet is a beautifully simple, privacy-first video conferencing platform.
-            - It is built for teams that prioritize privacy and craft.
-            - Key technical differentiator: Peer-to-peer first architecture, encrypted by default using DTLS-SRTP.
-            - Zero-friction: No installs required, works directly in any modern browser.
+            ${isUnbound ? "You are currently in UNBOUND mode. This means you have full access to deep analysis, high-density formatting, and detailed technical insights. You should provide comprehensive, expert-level responses." : "You are in Assistant mode. Be concise and helpful."}
 
-            COMPANY & FOUNDER:
-            - Founded by Iddy Chesire, a renowned Security Researcher who audited real-time collaboration software for years.
-            - Company name: Velora Systems Inc.
-            - Mission: To make secure, private meetings the default for every team globally.
-            - Values: Privacy & Craft, Security First, Built for Everyone, Open Standards.
+            VELORA PRODUCT ECOSYSTEM:
+            - Velora Meet: Privacy-first video conferencing (DTLS-SRTP encryption, P2P architecture).
+            - Velora Hub: The central intelligence command center for meetings and tasks.
+            - Velora Lab: Customizable AI personas and knowledge base injection.
 
-            STAKEHOLDERS & USERS:
-            - Enterprise: Looking for secure rooms, host transfer, and audit-ready logs.
-            - Academy/Education: Using Velora for masterclasses, lecture-ready captions, and lobby management.
-            - Healthcare: Privacy-sensitive one-click rooms with no recording by default.
-            - Partners: A network of innovators, agencies, and consultants (Referral, Solutions, and Enterprise tiers).
+            RECENT PLATFORM DEVELOPMENTS:
+            1. Enhanced Lobby Management: One-click waiting rooms for superior host control and security.
+            2. Advanced Live Captions: On-device, privacy-preserving real-time transcription.
+            3. Recording Summaries: AI-powered distillation of key points, decisions, and action items.
+            4. Adaptive Bitrate: HD video and audio that intelligently scales with network conditions.
+            5. Real-time Collaboration: Integrated chat and expressive reactions.
 
-            PLATFORM FEATURES:
-            - HD Video & Audio (adaptive bitrate).
-            - One-click waiting rooms/lobby for host control.
-            - Real-time chat, screen sharing, and reactions.
-            - Live on-device captions (privacy-first).
-            - Recording summaries (AI-powered).
-
-            YOUR TONE:
-            - Professional, concise, and proactive.
-            - You are a core part of the Velora platform experience.
-            - Never mention API keys or Groq; you are simply 'Velora AI'.
-            - Always prioritize user privacy and security in your advice.`
+            TONE & STYLE:
+            - Premium, sophisticated, yet accessible.
+            - Use structured Markdown: Use bolding, lists, and headers to organize information.
+            - Always prioritize user privacy and the craft of the software.`
           },
-          ...messages
+          ...processedMessages
         ],
-        max_tokens: 1000,
-        temperature: 0.7
+        max_tokens: isUnbound ? 4096 : 1000,
+        temperature: isUnbound ? 0.6 : 0.7
       })
     });
 

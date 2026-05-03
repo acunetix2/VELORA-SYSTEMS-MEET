@@ -37,6 +37,7 @@ import { Route as DashboardEnterpriseRouteImport } from './routes/dashboard.ente
 import { Route as DashboardDeveloperRouteImport } from './routes/dashboard.developer'
 import { Route as DashboardContactsRouteImport } from './routes/dashboard.contacts'
 import { Route as DashboardClassroomRouteImport } from './routes/dashboard.classroom'
+import { Route as DashboardAiRouteImport } from './routes/dashboard.ai'
 import { Route as DashboardAcademyRouteImport } from './routes/dashboard.academy'
 import { Route as DashboardAboutRouteImport } from './routes/dashboard.about'
 import { Route as DashboardClassroomClassIdRouteImport } from './routes/dashboard.classroom.$classId'
@@ -181,6 +182,11 @@ const DashboardClassroomRoute = DashboardClassroomRouteImport.update({
   path: '/classroom',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAiRoute = DashboardAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAcademyRoute = DashboardAcademyRouteImport.update({
   id: '/academy',
   path: '/academy',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/use-cases': typeof UseCasesRoute
   '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
+  '/dashboard/ai': typeof DashboardAiRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
   '/dashboard/developer': typeof DashboardDeveloperRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/use-cases': typeof UseCasesRoute
   '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
+  '/dashboard/ai': typeof DashboardAiRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
   '/dashboard/developer': typeof DashboardDeveloperRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/use-cases': typeof UseCasesRoute
   '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
+  '/dashboard/ai': typeof DashboardAiRoute
   '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
   '/dashboard/developer': typeof DashboardDeveloperRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/use-cases'
     | '/dashboard/about'
     | '/dashboard/academy'
+    | '/dashboard/ai'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
     | '/dashboard/developer'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/use-cases'
     | '/dashboard/about'
     | '/dashboard/academy'
+    | '/dashboard/ai'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
     | '/dashboard/developer'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/use-cases'
     | '/dashboard/about'
     | '/dashboard/academy'
+    | '/dashboard/ai'
     | '/dashboard/classroom'
     | '/dashboard/contacts'
     | '/dashboard/developer'
@@ -614,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/ai': {
+      id: '/dashboard/ai'
+      path: '/ai'
+      fullPath: '/dashboard/ai'
+      preLoaderRoute: typeof DashboardAiRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/academy': {
       id: '/dashboard/academy'
       path: '/academy'
@@ -652,6 +671,7 @@ const DashboardClassroomRouteWithChildren =
 interface DashboardRouteChildren {
   DashboardAboutRoute: typeof DashboardAboutRoute
   DashboardAcademyRoute: typeof DashboardAcademyRoute
+  DashboardAiRoute: typeof DashboardAiRoute
   DashboardClassroomRoute: typeof DashboardClassroomRouteWithChildren
   DashboardContactsRoute: typeof DashboardContactsRoute
   DashboardDeveloperRoute: typeof DashboardDeveloperRoute
@@ -670,6 +690,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAboutRoute: DashboardAboutRoute,
   DashboardAcademyRoute: DashboardAcademyRoute,
+  DashboardAiRoute: DashboardAiRoute,
   DashboardClassroomRoute: DashboardClassroomRouteWithChildren,
   DashboardContactsRoute: DashboardContactsRoute,
   DashboardDeveloperRoute: DashboardDeveloperRoute,

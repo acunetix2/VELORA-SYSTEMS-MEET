@@ -37,6 +37,7 @@ import {
   Activity,
   Zap,
   HeartHandshake,
+  BrainCircuit,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -211,6 +212,22 @@ function DashboardInner() {
             </p>
             <Button asChild className="mt-auto bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl">
               <Link to="/dashboard/partners">Manage referrals <ArrowRight className="h-4 w-4 ml-2" /></Link>
+            </Button>
+          </div>
+
+          {/* AI Spotlight */}
+          <div className="glass rounded-3xl p-6 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 grid place-items-center">
+                <BrainCircuit className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-lg">Velora AI</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              View meeting summaries, sentiment trends, and Velora task extraction.
+            </p>
+            <Button asChild className="mt-auto bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-brand border-0">
+              <Link to="/dashboard/ai">Open command center <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
         </section>

@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
   { to: "/dashboard/recordings", label: "Recordings", icon: History },
   { to: "/dashboard/classroom", label: "Classroom", icon: GraduationCap },
   { to: "/dashboard/contacts", label: "Contacts", icon: Users2 },
+  { to: "/dashboard/ai", label: "Velora AI", icon: BrainCircuit, badge: "New" },
 ];
 
 const MORE: NavItem[] = [
