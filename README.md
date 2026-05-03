@@ -86,7 +86,9 @@ Velora Meet is proudly powering collaboration for world-class, fast-growing orga
 
 ---
 
-## ❤️ Contributors
+## ❤️ Builder & Contributors
+
+**Built by [Iddy Chesire](https://github.com/acunetix2) — Founder & Lead Engineer**
 
 Velora Meet is brought to life by a dedicated, passionate team of designers, product thinkers, and collaborators focused on building the ultimate communication experience. 
 
