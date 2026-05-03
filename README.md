@@ -93,3 +93,9 @@ Velora Meet is proudly powering collaboration for world-class, fast-growing orga
 Velora Meet is brought to life by a dedicated, passionate team of designers, product thinkers, and collaborators focused on building the ultimate communication experience. 
 
 Thank you to everyone who has shaped the vision, rigorously tested the early betas, and provided the invaluable feedback that makes Velora exactly what modern teams dream of using every single day.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
