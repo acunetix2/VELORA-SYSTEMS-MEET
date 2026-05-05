@@ -4,7 +4,6 @@ import { tanstackStart } from '@tanstack/start/vite'
 
 export default defineConfig({
   plugins: [
-    tanstackStart(),
     netlify(), // ← add this (anywhere in the array is fine)
     viteReact(),
   ],
