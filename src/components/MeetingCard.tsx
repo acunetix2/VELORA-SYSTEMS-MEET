@@ -78,9 +78,9 @@ export function MeetingCard({
         params={{ meetingId }}
         className={`group relative block ${className}`}
       >
-        <div className="glass rounded-3xl overflow-hidden border border-glass-border hover:border-primary/50 transition-all hover:shadow-elegant hover:shadow-primary/5 h-full flex flex-col group/card">
+        <div className="glass card-lining-left lining-green rounded-xl overflow-hidden border border-glass-border hover:border-primary/50 transition-all hover:bg-card/40 h-full flex flex-col group/card shadow-elegant">
           {/* Header with vibrant gradient background */}
-          <div className="relative h-36 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 overflow-hidden border-b border-glass-border/30">
+          <div className="relative h-28 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 overflow-hidden border-b border-glass-border/30">
             {/* Animated accent */}
             <div className="absolute inset-0 opacity-20 group-hover/card:opacity-40 transition-opacity">
               <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,var(--brand-green)_0%,transparent_70%)] animate-float blur-3xl opacity-20" />
@@ -96,7 +96,7 @@ export function MeetingCard({
                       Live Room
                     </p>
                   </div>
-                  <p className="font-mono text-xl font-black text-foreground tracking-tight">
+                  <p className="font-mono text-lg font-black text-foreground tracking-tight break-all">
                     {meetingId}
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export function MeetingCard({
             <div className="space-y-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Calendar className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-                <span className="truncate">{createdDate.toLocaleDateString()}</span>
+                <span className="break-words">{createdDate.toLocaleDateString()}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 shrink-0 text-primary/60" />
@@ -182,7 +182,7 @@ export function MeetingCard({
             <Button
               onClick={handleRejoin}
               disabled={isLoading}
-              className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow h-10 gap-2"
+              className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow h-9 text-xs gap-2"
             >
               {isLoading ? (
                 <>
@@ -202,16 +202,16 @@ export function MeetingCard({
                 onClick={copyLink}
                 variant="secondary"
                 size="sm"
-                className="flex-1 gap-1"
+                className="flex-1 h-8 text-[11px] gap-1"
               >
-                <Copy className="h-3.5 w-3.5" />
+                <Copy className="h-3 w-3" />
                 <span className="hidden sm:inline">Copy link</span>
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

@@ -76,7 +76,7 @@ function Page() {
               const isExpanded = expandedId === m.id;
               const date = new Date(m.createdAt);
               return (
-                <div key={m.id} className={`dash-card ${isExpanded ? 'ring-2 ring-purple-500/20' : ''}`}>
+                <div key={m.id} className={`dash-card ${isExpanded ? 'ring-2 ring-primary/20 border-primary/30 shadow-none' : ''}`}>
                   <div className="dash-card-accent accent-purple" />
                   <div 
                     className="dash-card-header"
@@ -140,15 +140,15 @@ function Page() {
                           <div className="flex flex-col gap-2">
                             <Button 
                               onClick={() => navigate({ to: "/meet/$meetingId", params: { meetingId: m.id } })}
-                              className="bg-purple-500 hover:bg-purple-600 text-white rounded-xl h-11 border-0 shadow-lg shadow-purple-500/20"
+                              className="bg-primary hover:opacity-90 text-primary-foreground rounded-xl h-11 border-0 shadow-lg shadow-primary/20 font-bold"
                             >
                               Rejoin Meeting <ArrowRight className="h-4 w-4 ml-2" />
                             </Button>
                             <div className="grid grid-cols-2 gap-2">
-                              <Button variant="outline" onClick={() => copy(m.id)} className="rounded-xl h-10 border-glass-border hover:bg-purple-500/5 hover:text-purple-500">
+                              <Button variant="outline" onClick={() => copy(m.id)} className="rounded-xl h-10 border-glass-border hover:bg-primary/5 hover:text-primary font-bold">
                                 <Share2 className="h-4 w-4 mr-2" /> Copy Link
                               </Button>
-                              <Button variant="outline" className="rounded-xl h-10 border-glass-border hover:bg-purple-500/5 hover:text-purple-500">
+                              <Button variant="outline" className="rounded-xl h-10 border-glass-border hover:bg-primary/5 hover:text-primary font-bold">
                                 <Copy className="h-4 w-4 mr-2" /> Copy ID
                               </Button>
                             </div>

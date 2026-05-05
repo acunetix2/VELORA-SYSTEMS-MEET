@@ -33,7 +33,7 @@ export function SignOutDialog({ open, onOpenChange }: Props) {
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-card border-border max-w-sm">
+      <AlertDialogContent className="glass border-glass-border max-w-sm rounded-3xl shadow-elegant">
         <AlertDialogHeader className="space-y-4">
           <div className="flex items-start gap-3">
             <Avatar name={name} src={profile?.avatar_url} size="lg" />
@@ -67,14 +67,17 @@ export function SignOutDialog({ open, onOpenChange }: Props) {
           </div>
         </AlertDialogHeader>
 
-        <AlertDialogFooter className="gap-2 pt-2">
-          <AlertDialogCancel disabled={busy} className="flex-1">
-            Stay signed in
+        <AlertDialogFooter className="gap-3 pt-2">
+          <AlertDialogCancel 
+            disabled={busy} 
+            className="flex-1 bg-green-500 text-white hover:bg-green-600 rounded-xl h-11 font-bold transition-all shadow-none border-0"
+          >
+            Stay in
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={confirm}
             disabled={busy}
-            className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+            className="flex-1 bg-red-600 text-white hover:bg-red-700 rounded-xl h-11 font-bold shadow-none gap-2 border-0"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
             Sign out

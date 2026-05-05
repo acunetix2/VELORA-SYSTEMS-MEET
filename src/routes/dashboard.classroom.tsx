@@ -201,11 +201,11 @@ function Page() {
   return (
     <DashboardShell title="Classroom" actions={
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => setIsJoining(true)} className="rounded-xl h-10 px-4 border-glass-border">
-          <UserPlus className="h-4 w-4 mr-2" /> Join Class
+        <Button onClick={() => setIsJoining(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-9 px-4 shadow-xl shadow-blue-500/10 text-xs">
+          <UserPlus className="h-3.5 w-3.5 mr-2" /> Join Class
         </Button>
-        <Button onClick={() => setIsCreating(true)} className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-xl h-10 px-4 shadow-glow">
-          <Plus className="h-4 w-4" /> Create Class
+        <Button onClick={() => setIsCreating(true)} className="bg-[#22c55e] hover:bg-[#16a34a] text-white gap-2 rounded-xl h-9 px-4 shadow-glow text-xs">
+          <Plus className="h-3.5 w-3.5" /> Create Class
         </Button>
       </div>
     }>
@@ -219,7 +219,7 @@ function Page() {
                 <BookOpen className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Teaching</p>
+                <p className="text-xs font-bold text-muted-foreground">Teaching</p>
                 <h3 className="text-2xl font-black">{classes.length}</h3>
               </div>
             </div>
@@ -230,7 +230,7 @@ function Page() {
                 <Users2 className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Enrolled</p>
+                <p className="text-xs font-bold text-muted-foreground">Enrolled</p>
                 <h3 className="text-2xl font-black">{joinedClasses.length}</h3>
               </div>
             </div>
@@ -241,7 +241,7 @@ function Page() {
                 <Video className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Students</p>
+                <p className="text-xs font-bold text-muted-foreground">Total Students</p>
                 <h3 className="text-2xl font-black">{allStudents.length}</h3>
               </div>
             </div>
@@ -290,10 +290,10 @@ function Page() {
                 Ready to start teaching or learning? Create a class or join one with a code.
               </p>
               <div className="flex justify-center gap-3 mt-8">
-                <Button onClick={() => setIsJoining(true)} variant="outline" className="rounded-xl h-12 px-8 border-glass-border font-bold">
+                <Button onClick={() => setIsJoining(true)} className="rounded-xl h-10 px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/10 font-bold text-sm">
                   Join Class
                 </Button>
-                <Button onClick={() => setIsCreating(true)} className="rounded-xl h-12 px-8 bg-primary hover:bg-primary/90 text-white shadow-glow font-bold">
+                <Button onClick={() => setIsCreating(true)} className="rounded-xl h-10 px-8 bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-glow font-bold text-sm">
                   <Plus className="h-4 w-4 mr-2" /> Create Class
                 </Button>
               </div>
@@ -328,7 +328,7 @@ function Page() {
                         <div className={`h-12 w-12 rounded-2xl grid place-items-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ${isOwner ? 'bg-primary/10 text-primary shadow-glow' : 'bg-amber-500/10 text-amber-500 shadow-glow'}`}>
                           {isOwner ? <Users className="h-6 w-6" /> : <GraduationCap className="h-6 w-6" />}
                         </div>
-                        <span className={`text-[10px] uppercase tracking-[0.2em] font-black px-3 py-1 rounded-full ${isOwner ? 'bg-primary/20 text-primary' : 'bg-amber-500/20 text-amber-500'}`}>
+                        <span className={`text-[10px] font-black px-3 py-1 rounded-full ${isOwner ? 'bg-primary/20 text-primary' : 'bg-amber-500/20 text-amber-500'}`}>
                           {isOwner ? "Lecturer" : "Student"}
                         </span>
                       </div>
@@ -370,9 +370,9 @@ function Page() {
               <table className="w-full text-left">
                 <thead className="bg-muted/30 border-b border-glass-border">
                   <tr>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Student Name</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Classroom</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Email</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground">Student Name</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground">Classroom</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground">Email</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-glass-border">
@@ -382,7 +382,7 @@ function Page() {
                         {s.user?.display_name || s.email.split('@')[0]}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-block px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold bg-primary/10 text-primary">
+                        <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold bg-primary/10 text-primary">
                           {s.classrooms?.name}
                         </span>
                       </td>
@@ -405,16 +405,16 @@ function Page() {
             </h2>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-widest font-bold ml-1">Class Name</Label>
+                <Label className="text-[11px] font-bold ml-1">Class Name</Label>
                 <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Advanced Physics" className="bg-card/40 h-12 rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-widest font-bold ml-1">Description</Label>
+                <Label className="text-[11px] font-bold ml-1">Description</Label>
                 <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Briefly describe your class" className="bg-card/40 h-12 rounded-xl" />
               </div>
               <div className="flex gap-3 mt-6">
-                <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 rounded-xl h-12">Cancel</Button>
-                <Button onClick={createClass} disabled={!newName} className="flex-1 bg-primary text-white rounded-xl h-12 shadow-glow">Create Class</Button>
+                <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 rounded-xl h-10">Cancel</Button>
+                <Button onClick={createClass} disabled={!newName} className="flex-1 bg-[#22c55e] text-white rounded-xl h-10 shadow-glow font-bold">Create Class</Button>
               </div>
             </div>
           </div>
@@ -430,15 +430,15 @@ function Page() {
             </h2>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[11px] uppercase tracking-widest font-bold ml-1">Class ID / Code</Label>
+                <Label className="text-[11px] font-bold ml-1">Class ID / Code</Label>
                 <Input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Enter the ID provided by your lecturer" className="bg-card/40 h-12 rounded-xl font-mono" />
               </div>
               <p className="text-[10px] text-muted-foreground italic px-1">
                 Tip: Ask your lecturer to share the class ID found in their classroom dashboard.
               </p>
               <div className="flex gap-3 mt-6">
-                <Button variant="ghost" onClick={() => setIsJoining(false)} className="flex-1 rounded-xl h-12">Cancel</Button>
-                <Button onClick={joinClass} disabled={!joinCode} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-12 shadow-glow">Join Class</Button>
+                <Button variant="ghost" onClick={() => setIsJoining(false)} className="flex-1 rounded-xl h-10">Cancel</Button>
+                <Button onClick={joinClass} disabled={!joinCode} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 shadow-xl shadow-blue-500/10 font-bold">Join Class</Button>
               </div>
             </div>
           </div>

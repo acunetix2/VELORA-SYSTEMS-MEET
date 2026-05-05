@@ -170,9 +170,9 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background selection:bg-primary/30">
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground selection:bg-primary/30 transition-smooth">
       {/* Left visual: Brand Experience */}
-      <aside className="hidden lg:flex flex-col justify-between p-16 relative overflow-hidden bg-[oklch(0.15_0.02_245)]">
+      <aside className="hidden lg:flex flex-col justify-between p-16 relative overflow-hidden bg-sidebar/40 border-r border-glass-border">
         {/* Animated Background Orbs */}
         <div className="absolute top-[-10%] left-[-10%] h-[60%] w-[60%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] bg-success/15 blur-[100px] rounded-full" />
@@ -182,35 +182,35 @@ function AuthPage() {
         </div>
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest text-primary font-bold mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] uppercase tracking-widest text-primary font-bold mb-6">
             <span className="h-1 w-1 rounded-full bg-primary shadow-glow animate-ping" /> v2.4 Enterprise Edition
           </div>
-          <h2 className="font-display text-5xl font-semibold leading-[1.1] tracking-tight text-white">
+          <h2 className="font-display text-5xl font-semibold leading-[1.1] tracking-tight text-foreground">
             Where teams <br />
             <span className="text-gradient">actually connect.</span>
           </h2>
-          <p className="mt-6 text-white/60 text-lg max-w-md leading-relaxed">
+          <p className="mt-6 text-muted-foreground text-lg max-w-md leading-relaxed">
             Experience the next generation of video collaboration. No installs, just pure performance.
           </p>
           
-          <div className="mt-12 grid grid-cols-2 gap-8 border-t border-white/10 pt-8">
+          <div className="mt-12 grid grid-cols-2 gap-8 border-t border-foreground/10 pt-8">
             <div>
-              <p className="text-2xl font-bold text-white">100%</p>
-              <p className="text-xs text-white/40 uppercase tracking-wider mt-1">E2E Encrypted</p>
+              <p className="text-2xl font-bold text-foreground">100%</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">E2E Encrypted</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-white">&lt;50ms</p>
-              <p className="text-xs text-white/40 uppercase tracking-wider mt-1">Global Latency</p>
+              <p className="text-2xl font-bold text-foreground">&lt;50ms</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Global Latency</p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between">
-          <p className="text-xs text-white/30 italic">Crafted by Velora Systems</p>
+          <p className="text-xs text-muted-foreground italic">Crafted by Velora Systems</p>
           <div className="flex gap-4">
-             <div className="h-1 w-8 rounded-full bg-white/20" />
-             <div className="h-1 w-4 rounded-full bg-white/10" />
-             <div className="h-1 w-4 rounded-full bg-white/10" />
+             <div className="h-1 w-8 rounded-full bg-foreground/20" />
+             <div className="h-1 w-4 rounded-full bg-foreground/10" />
+             <div className="h-1 w-4 rounded-full bg-foreground/10" />
           </div>
         </div>
       </aside>

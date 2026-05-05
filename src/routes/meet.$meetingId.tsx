@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth, getDisplayName } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useWebRTC, type ConnectionQuality } from "@/hooks/useWebRTC";
@@ -47,10 +46,85 @@ const searchSchema = z.object({
 
 function MeetingComponent() {
   return (
-    <RequireAuth>
+    <MeetingAuthGate>
       <MeetingContainer />
-    </RequireAuth>
+    </MeetingAuthGate>
   );
+}
+
+/** Shows a branded sign-in prompt when the user is not authenticated. */
+function MeetingAuthGate({ children }: { children: React.ReactNode }) {
+  const { meetingId } = Route.useParams();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Verifying your identity…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {/* Background blobs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative glass rounded-3xl p-8 sm:p-10 max-w-md w-full text-center shadow-elegant flex flex-col items-center gap-6">
+          {/* Logo */}
+          <Logo />
+
+          {/* Meeting badge */}
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl px-5 py-3 w-full">
+            <p className="text-xs text-muted-foreground font-medium mb-1">You've been invited to a meeting</p>
+            <p className="font-mono text-sm font-bold text-primary tracking-widest">{meetingId}</p>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black tracking-tight">Sign in to join</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Velora Meet requires an account to join meetings — keeping conversations secure and private.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full">
+            <Button
+              onClick={() => navigate({ to: "/auth", search: { redirect: window.location.href, mode: "login" } as any })}
+              className="w-full h-12 bg-gradient-primary text-primary-foreground border-0 shadow-glow font-bold"
+            >
+              Sign in to Velora
+            </Button>
+            <Button
+              onClick={() => navigate({ to: "/auth", search: { redirect: window.location.href, mode: "signup" } as any })}
+              variant="outline"
+              className="w-full h-12 border-glass-border font-bold"
+            >
+              Create a free account
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Already signed in on another device? <button onClick={() => window.location.reload()} className="text-primary underline">Refresh</button>
+          </p>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            End-to-end encrypted · Your privacy is protected
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }
 
 export const Route = createFileRoute("/meet/$meetingId")({
@@ -320,10 +394,9 @@ function Room({
     ch.on("broadcast", { event: "chat" }, chatHandler);
     ch.on("broadcast", { event: "agenda-update" }, agendaHandler);
     ch.on("broadcast", { event: "breakout-config" }, breakoutHandler);
+  // Also clean up chat/agenda/breakout channel listeners safely
     return () => {
-      ch.off("broadcast", { event: "chat" });
-      ch.off("broadcast", { event: "agenda-update" });
-      ch.off("broadcast", { event: "breakout-config" });
+      // Handled by channel teardown in useWebRTC
     };
     // Only re-run when the channel changes, NOT when `side` changes
   }, [rtc.channel.current]);
@@ -642,14 +715,9 @@ function Room({
     });
 
     return () => {
-      // Clean up all listeners when the channel changes
-      ch.off("broadcast", { event: "reaction" });
-      ch.off("broadcast", { event: "hand" });
-      ch.off("broadcast", { event: "qna" });
-      ch.off("broadcast", { event: "note" });
-      ch.off("broadcast", { event: "whiteboard" });
-      ch.off("broadcast", { event: "poll" });
-      ch.off("broadcast", { event: "rec" });
+      // Supabase channel listeners are cleaned up when the channel itself is removed
+      // by useWebRTC on unmount — no need to call ch.off() here.
+      // This prevents the "ch.off is not a function" error.
     };
     // Intentionally NOT including `side` — we read it via sideRef to avoid
     // re-registering listeners on every panel switch (that's what caused tripling).
@@ -742,7 +810,11 @@ function Room({
   const leave = () => {
     captions.stop();
     if (recording.recording) recording.stop();
-    navigate({ to: "/summary/$meetingId", params: { meetingId } });
+    try {
+      navigate({ to: "/summary/$meetingId", params: { meetingId } });
+    } catch {
+      navigate({ to: "/dashboard" });
+    }
   };
 
   // ---- Pre-join screens ----
@@ -1116,9 +1188,15 @@ function Room({
       <footer className="px-2 sm:px-4 py-3 border-t border-glass-border safe-bottom">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <Ctl on={rtc.audioOn} onClick={rtc.toggleAudio} label={rtc.audioOn ? "Mute" : "Unmute"}
-            icon={rtc.audioOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />} />
+            icon={rtc.audioOn ? <Mic className="h-4 w-4 sm:h-5 sm:w-5" /> : <MicOff className="h-4 w-4 sm:h-5 sm:w-5" />}
+            onClass="bg-green-600 text-white shadow-lg shadow-green-500/20"
+            offClass="bg-red-600 text-white shadow-lg shadow-red-500/20"
+          />
           <Ctl on={rtc.videoOn} onClick={rtc.toggleVideo} label={rtc.videoOn ? "Camera off" : "Camera on"}
-            icon={rtc.videoOn ? <VideoIcon className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />} />
+            icon={rtc.videoOn ? <VideoIcon className="h-4 w-4 sm:h-5 sm:w-5" /> : <VideoOff className="h-4 w-4 sm:h-5 sm:w-5" />}
+            onClass="bg-green-600 text-white shadow-lg shadow-green-500/20"
+            offClass="bg-red-600 text-white shadow-lg shadow-red-500/20"
+          />
           <Ctl on={rtc.isScreenSharing} 
             onClick={() => {
               if (rtc.isScreenSharing) {
@@ -1133,7 +1211,9 @@ function Room({
               }
             }}
             label={rtc.isScreenSharing ? "Stop sharing" : "Share screen"}
-            icon={rtc.isScreenSharing ? <MonitorX className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
+            icon={rtc.isScreenSharing ? <MonitorX className="h-4 w-4 sm:h-5 sm:w-5" /> : <MonitorUp className="h-4 w-4 sm:h-5 sm:w-5" />}
+            onClass="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+            offClass="glass"
           />
 
           <div className="w-px h-6 bg-glass-border mx-1 hidden sm:block" />
@@ -1141,8 +1221,8 @@ function Room({
           {/* Reactions */}
           <Popover>
             <PopoverTrigger asChild>
-              <button title="Reactions" className="h-11 w-11 sm:h-12 sm:w-12 grid place-items-center rounded-2xl glass hover:bg-card/80">
-                <Smile className="h-5 w-5" />
+              <button title="Reactions" className="h-9 w-9 sm:h-12 sm:w-12 grid place-items-center rounded-xl sm:rounded-2xl glass hover:bg-card/80">
+                <Smile className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </PopoverTrigger>
             <PopoverContent side="top" className="glass border-glass-border w-auto p-2 mb-2">
@@ -1164,21 +1244,25 @@ function Room({
             on={myHand}
             onClick={toggleHand}
             label={myHand ? "Lower hand" : "Raise hand"}
-            icon={<Hand className={`h-5 w-5 ${myHand ? "fill-current text-warning" : ""}`} />}
+            icon={<Hand className={`h-4 w-4 sm:h-5 sm:w-5 ${myHand ? "fill-current" : ""}`} />}
+            onClass="bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+            offClass="glass"
           />
 
           <div className="w-px h-6 bg-glass-border mx-1 hidden sm:block" />
 
           <Ctl on={side === "chat"} onClick={() => { setSide(side === "chat" ? null : "chat"); setUnreadChat(0); }} label="Chat"
-            icon={<MessagesSquare className="h-5 w-5" />} badge={unreadChat > 0 ? unreadChat : undefined} />
+            icon={<MessagesSquare className="h-4 w-4 sm:h-5 sm:w-5" />} badge={unreadChat > 0 ? unreadChat : undefined}
+            onClass="bg-blue-600 text-white" offClass="glass" />
           <Ctl on={side === "people"} onClick={() => setSide(side === "people" ? null : "people")} label="People"
-            icon={<Users className="h-5 w-5" />} badge={peopleCount > 1 ? peopleCount : undefined} />
+            icon={<Users className="h-4 w-4 sm:h-5 sm:w-5" />} badge={peopleCount > 1 ? peopleCount : undefined}
+            onClass="bg-blue-600 text-white" offClass="glass" />
 
           {/* More Options Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl glass hover:bg-card/80">
-                <MoreVertical className="h-5 w-5" />
+              <Button variant="secondary" size="icon" className="h-9 w-9 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl glass hover:bg-card/80">
+                <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="glass border-glass-border w-64 p-2 space-y-1">
@@ -1241,8 +1325,8 @@ function Room({
 
           <div className="w-px h-6 bg-glass-border mx-1 hidden sm:block" />
 
-          <Button onClick={leave} variant="destructive" size="lg" className="rounded-2xl px-6 h-11 sm:h-12 shadow-brand flex items-center gap-2 font-bold">
-            <PhoneOff className="h-5 w-5" />
+          <Button onClick={leave} variant="destructive" size="lg" className="rounded-xl sm:rounded-2xl px-3 sm:px-6 h-9 sm:h-12 shadow-brand flex items-center gap-2 font-bold">
+            <PhoneOff className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="hidden sm:inline">Leave</span>
           </Button>
         </div>
@@ -1286,16 +1370,23 @@ function ExpiryBadge({ expiresAt }: { expiresAt: number }) {
   );
 }
 
-function Ctl({ on, onClick, label, icon, activeClass }: {
-  on: boolean; onClick: () => void; label: string; icon: React.ReactNode; activeClass?: string;
+function Ctl({ on, onClick, label, icon, onClass, offClass, badge }: {
+  on: boolean; onClick: () => void; label: string; icon: React.ReactNode;
+  onClass?: string; offClass?: string; badge?: number;
 }) {
+  const colorClass = on
+    ? (onClass ?? "bg-green-600 text-white")
+    : (offClass ?? "bg-red-600/20 text-red-400");
   return (
     <button
       onClick={onClick}
       title={label}
-      className={`h-11 w-11 sm:h-12 sm:w-12 grid place-items-center rounded-2xl transition-smooth glass hover:bg-card/80 ${activeClass ?? (on ? "" : "bg-destructive/20 text-destructive")}`}
+      className={`relative h-9 w-9 sm:h-12 sm:w-12 grid place-items-center rounded-xl sm:rounded-2xl transition-all duration-200 hover:opacity-90 ${colorClass}`}
     >
       {icon}
+      {badge !== undefined && (
+        <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] min-w-[16px] h-[16px] flex items-center justify-center rounded-full font-bold">{badge}</span>
+      )}
     </button>
   );
 }

@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { useAuth, getDisplayName } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Avatar } from "@/components/Avatar";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -158,75 +159,96 @@ function DashboardInner() {
         <section className="mb-6">
           <p className="text-xs text-muted-foreground font-bold">{today}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-            Velora <span className="text-primary italic">Meet</span>
+            Welcome back, <span className="text-primary">{displayName.split(" ")[0]}</span>
           </h2>
-          <div className="flex items-center gap-3 mt-1.5 text-muted-foreground">
-            <span className="text-lg">Welcome back, <span className="font-bold text-foreground">{displayName.split(" ")[0]}</span></span>
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="dash-card p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-muted-foreground/60">Sessions hosted</span>
+              <span className="text-2xl font-black text-primary">{analytics.hostCount}</span>
+            </div>
+            <div className="dash-card p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-muted-foreground/60">Participants</span>
+              <span className="text-2xl font-black text-primary">{analytics.participantCount}</span>
+            </div>
+            <div className="dash-card p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-muted-foreground/60">Total time</span>
+              <span className="text-2xl font-black text-primary">{analytics.totalMeetings * 45}m</span>
+            </div>
+            <div className="dash-card p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-muted-foreground/60">Engagement</span>
+              <div className="flex items-end gap-1 h-8 mt-1">
+                {trends.map((t, i) => (
+                  <div key={i} className="flex-1 bg-primary/20 rounded-t-sm transition-all hover:bg-primary/40" style={{ height: `${Math.max(t, 10)}%` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-muted-foreground/60">
             <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
             <span className="text-sm">Ready for your next session?</span>
           </div>
         </section>
         <section className="grid md:grid-cols-2 gap-5 mb-8">
           {/* Enterprise Spotlight */}
-          <div className="glass rounded-3xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col">
+          <div className="glass card-lining-bottom lining-blue rounded-xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col shadow-elegant">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
                 <Building2 className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-lg">Organization hub</h3>
+              <h3 className="font-bold text-lg text-primary">Organization hub</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Manage your organization's security and team collaboration.
             </p>
-            <Button asChild className="mt-auto bg-primary hover:bg-primary/90 text-white rounded-xl shadow-glow">
+            <Button asChild className="mt-auto bg-primary hover:opacity-90 text-primary-foreground rounded-xl shadow-glow border-0 font-bold">
               <Link to="/dashboard/organization">Manage organization <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
 
           {/* Academy Spotlight */}
-          <div className="glass rounded-3xl p-6 border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent flex flex-col">
+          <div className="glass card-lining-bottom lining-amber rounded-xl p-6 border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent flex flex-col shadow-elegant">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 grid place-items-center">
                 <GraduationCap className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-lg">Velora Academy</h3>
+              <h3 className="font-bold text-lg text-primary">Velora Academy</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Master advanced features and hybrid meeting strategies with Iddy Chesire.
             </p>
-            <Button asChild variant="outline" className="mt-auto border-amber-500/30 hover:bg-amber-500/5 hover:text-amber-500 rounded-xl">
+            <Button asChild variant="outline" className="mt-auto border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl font-bold">
               <Link to="/dashboard/classroom">Open classrooms <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
 
           {/* Partner Spotlight */}
-          <div className="glass rounded-3xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col">
+          <div className="glass card-lining-bottom lining-green rounded-xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col shadow-elegant">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
                 <HeartHandshake className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-lg">Partner Ecosystem</h3>
+              <h3 className="font-bold text-lg text-primary">Partner Ecosystem</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               Share Velora and earn recurring rewards. Join our growing network.
             </p>
-            <Button asChild className="mt-auto bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl">
+            <Button asChild className="mt-auto bg-primary hover:opacity-90 text-primary-foreground border-0 shadow-glow rounded-xl font-bold">
               <Link to="/dashboard/partners">Manage referrals <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
 
           {/* AI Spotlight */}
-          <div className="glass rounded-3xl p-6 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent flex flex-col">
+          <div className="glass card-lining-bottom lining-purple rounded-xl p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent flex flex-col shadow-elegant">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 grid place-items-center">
                 <BrainCircuit className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-lg">Velora AI</h3>
+              <h3 className="font-bold text-lg text-primary">Velora AI</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
               View meeting summaries, sentiment trends, and Velora task extraction.
             </p>
-            <Button asChild className="mt-auto bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-brand border-0">
+            <Button asChild className="mt-auto bg-primary hover:opacity-90 text-primary-foreground rounded-xl shadow-glow border-0 font-bold">
               <Link to="/dashboard/ai">Open command center <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
@@ -283,10 +305,10 @@ function DashboardInner() {
                     key={opt.hrs}
                     type="button"
                     onClick={() => setExpiry(opt.hrs)}
-                    className={`text-xs rounded-lg px-3 py-1.5 border transition-smooth ${
+                    className={`text-xs rounded-lg px-3 py-1.5 border transition-all duration-300 font-bold ${
                       expiry === opt.hrs
-                        ? "border-primary/60 bg-primary/15 text-primary"
-                        : "border-glass-border bg-card/30 hover:bg-card/50 text-muted-foreground"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-500/20"
+                        : "border-glass-border bg-card/30 hover:bg-blue-500/5 hover:text-blue-600 text-muted-foreground"
                     }`}
                   >
                     {opt.label}
@@ -327,7 +349,7 @@ function DashboardInner() {
                     setCapacity(val);
                   }
                 }}
-                className="w-full h-1.5 bg-glass-border rounded-lg appearance-none cursor-pointer accent-primary"
+                className="w-full h-2.5 bg-blue-500/20 rounded-lg appearance-none cursor-pointer accent-blue-600 border border-blue-500/20 shadow-sm"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                 <span>2</span>
@@ -345,22 +367,23 @@ function DashboardInner() {
           </div>
 
           {/* Join */}
-          <div className="glass rounded-2xl p-5 sm:p-7">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl glass grid place-items-center">
+          <div className="glass rounded-2xl p-5 sm:p-7 bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 relative overflow-hidden group/join shadow-elegant">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover/join:bg-primary/10" />
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 grid place-items-center border border-primary/20 group-hover/join:scale-110 transition-transform">
                 <Link2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">Join with a code</h2>
-                <p className="text-sm text-muted-foreground">
-                  Enter the link or code shared with you.
+                <h2 className="text-xl font-black tracking-tight">Join with a code</h2>
+                <p className="text-[10px] font-bold tracking-widest text-muted-foreground/60">
+                  Enter the link or code shared with you
                 </p>
               </div>
             </div>
-            <div className="mt-5">
+            <div className="mt-5 relative z-10">
               <Label
                 htmlFor="code"
-                className="text-xs font-bold text-muted-foreground"
+                className="text-[10px] font-bold text-muted-foreground/60 ml-1"
               >
                 Meeting code
               </Label>
@@ -368,11 +391,11 @@ function DashboardInner() {
                 id="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="xrt-deo-nbo"
+                placeholder="xrt-deon-nbo"
                 onKeyDown={(e) => e.key === "Enter" && join()}
-                className="mt-2 bg-input/60 border-glass-border h-12 font-mono text-base"
+                className="mt-2 bg-background/50 border-glass-border h-12 font-mono text-base focus:ring-primary/20 rounded-xl"
               />
-              <Button onClick={join} variant="secondary" className="mt-3 w-full h-12">
+              <Button onClick={join} className="mt-3 w-full h-12 bg-blue-600 hover:bg-blue-500 text-white shadow-glow border-0 rounded-xl font-black uppercase tracking-widest text-[11px]">
                 Join meeting <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </div>
@@ -469,12 +492,16 @@ function DashboardInner() {
 
 function DashboardFooter() {
   return (
-    <footer className="mt-12 py-8 border-t border-glass-border/50 text-center">
-      <p className="text-xs text-muted-foreground mb-2 italic">"Communication is the foundation of craft."</p>
-      <div className="flex items-center justify-center gap-2">
-        <span className="text-[10px] tracking-widest font-bold text-foreground/60">Iddy Chesire</span>
-        <div className="h-1 w-1 rounded-full bg-primary/30" />
-        <span className="text-[10px] tracking-widest text-muted-foreground">CEO & Co-founder</span>
+    <footer className="mt-12 py-8 border-t border-glass-border/30 text-center space-y-4 relative z-10">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      <p className="text-xs text-muted-foreground font-medium opacity-80 whitespace-nowrap overflow-hidden">
+        "Communication is the foundation of craft. We build the tools so you can focus on the vision."
+      </p>
+      <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center text-center">
+          <span className="text-sm font-black text-foreground">Iddy Chesire</span>
+          <span className="text-[11px] text-primary font-bold">CEO & Co-founder</span>
+        </div>
       </div>
     </footer>
   );
@@ -534,16 +561,16 @@ function QuickCard({
   return (
     <Link
       to={to}
-      className="glass rounded-2xl p-4 flex items-center gap-3 transition-smooth hover:shadow-glow"
+      className="glass rounded-xl p-3 flex items-center gap-3 transition-all hover:bg-primary/5 hover:border-primary/30 border border-glass-border group/quick"
     >
-      <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glow text-primary-foreground">
+      <div className="h-9 w-9 rounded-lg bg-primary/10 grid place-items-center text-primary group-hover/quick:bg-primary group-hover/quick:text-white transition-all">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold leading-tight">{title}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
+        <p className="font-bold text-xs leading-tight break-words uppercase tracking-wide">{title}</p>
+        <p className="text-[10px] text-muted-foreground/60 break-words mt-0.5">{desc}</p>
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover/quick:translate-x-1 transition-transform" />
     </Link>
   );
 }

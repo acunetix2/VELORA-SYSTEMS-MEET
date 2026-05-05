@@ -4,7 +4,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
-
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 
 function NotFoundComponent() {
@@ -14,10 +14,13 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-gradient">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          The page you're looking for doesn't exist or has been moved.
+        <div className="mb-8 flex justify-center">
+          <Logo className="scale-150" />
+        </div>
+        <h1 className="text-7xl font-black text-primary tracking-tighter">404</h1>
+        <h2 className="mt-4 text-xl font-bold text-foreground uppercase tracking-widest">Page not found</h2>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
+          The link you followed might be broken or the room has been closed.
         </p>
         <div className="mt-6">
           <Link
@@ -39,13 +42,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <div className="h-20 w-20 bg-destructive/10 text-destructive rounded-full grid place-items-center mx-auto mb-6">
-          <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mb-8 flex justify-center">
+          <Logo className="scale-150" />
+        </div>
+        <div className="h-16 w-16 bg-red-500/10 text-red-500 rounded-2xl grid place-items-center mx-auto mb-6 border border-red-500/20 shadow-glow shadow-red-500/20">
+          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-foreground">Something went wrong</h1>
-        <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+        <h1 className="text-2xl font-black text-foreground uppercase tracking-wider">Something went wrong</h1>
+        <p className="mt-4 text-xs font-bold text-muted-foreground leading-relaxed uppercase tracking-widest max-w-[300px] mx-auto">
           {error.message || "An unexpected error occurred. Please try again."}
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">

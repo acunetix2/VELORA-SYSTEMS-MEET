@@ -6,7 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Mail, Users2, ChevronDown, User, ExternalLink, Video, Phone, Briefcase } from "lucide-react";
+import { Plus, Trash2, Mail, Users2, ChevronDown, User, ExternalLink, Video, Phone, Briefcase, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { generateMeetingId } from "@/lib/meeting";
@@ -46,8 +46,25 @@ function Page() {
   const [company, setCompany] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [notes, setNotes] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (email.includes("@") && email.length > 5) {
+      const lookup = async () => {
+        const { data } = await supabase.from("profiles").select("display_name, avatar_url, job_role").eq("email", email.trim()).single();
+        if (data) {
+          if (!name) setName(data.display_name || "");
+          if (!jobRole) setJobRole(data.job_role || "");
+          setAvatarUrl(data.avatar_url || null);
+          toast.success("Velora profile found!");
+        }
+      };
+      const t = setTimeout(lookup, 500);
+      return () => clearTimeout(t);
+    }
+  }, [email]);
 
   useEffect(() => {
     const fetch = async () => {
@@ -83,7 +100,8 @@ function Page() {
         phone: phone.trim(),
         company: company.trim(),
         job_role: jobRole.trim(),
-        notes: notes.trim()
+        notes: notes.trim(),
+        avatar_url: avatarUrl
       })
       .select()
       .single();
@@ -125,7 +143,7 @@ function Page() {
     <DashboardShell title="Contacts">
       <div className="px-4 sm:px-6 py-8 max-w-5xl mx-auto grid lg:grid-cols-[380px_1fr] gap-8 items-start">
         {/* Left column: Add Contact */}
-        <div className="dash-card sticky top-8">
+        <div className="dash-card card-lining-left sticky top-8">
           <div className="dash-card-accent accent-green" />
           <div className="p-6">
             <h2 className="text-lg font-bold flex items-center gap-2 mb-6">
@@ -145,7 +163,7 @@ function Page() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Email Address</Label>
+                <Label className="text-[11px] text-muted-foreground font-bold ml-1">Email address</Label>
                 <Input 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
@@ -155,7 +173,7 @@ function Page() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Phone</Label>
+                  <Label className="text-[11px] text-muted-foreground font-bold ml-1">Phone number</Label>
                   <Input 
                     value={phone} 
                     onChange={(e) => setPhone(e.target.value)} 
@@ -164,7 +182,7 @@ function Page() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Company</Label>
+                  <Label className="text-[11px] text-muted-foreground font-bold ml-1">Company</Label>
                   <Input 
                     value={company} 
                     onChange={(e) => setCompany(e.target.value)} 
@@ -174,7 +192,7 @@ function Page() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Job Role</Label>
+                <Label className="text-[11px] text-muted-foreground font-bold ml-1">Job role</Label>
                 <Input 
                   value={jobRole} 
                   onChange={(e) => setJobRole(e.target.value)} 
@@ -183,7 +201,7 @@ function Page() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Private Notes</Label>
+                <Label className="text-[11px] text-muted-foreground font-bold ml-1">Private notes</Label>
                 <Input 
                   value={notes} 
                   onChange={(e) => setNotes(e.target.value)} 
@@ -193,7 +211,7 @@ function Page() {
               </div>
               <Button 
                 onClick={add} 
-                className="w-full h-12 bg-green-500 hover:bg-green-600 text-white border-0 shadow-glow rounded-xl font-bold mt-2"
+                className="w-full h-12 bg-primary text-primary-foreground border-0 shadow-glow rounded-xl font-bold mt-2"
               >
                 Add to Directory
               </Button>
@@ -208,7 +226,7 @@ function Page() {
               <Users2 className="h-5 w-5 text-green-500" />
               Your Directory
             </h2>
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest bg-card/60 px-3 py-1 rounded-full border border-glass-border">
+            <span className="text-xs font-bold text-muted-foreground bg-card/60 px-3 py-1 rounded-full border border-glass-border">
               {items.length} Contacts
             </span>
           </div>
@@ -228,82 +246,85 @@ function Page() {
               {items.map((c) => {
                 const isExpanded = expandedId === c.id;
                 return (
-                  <div key={c.id} className={`dash-card ${isExpanded ? 'ring-2 ring-green-500/20' : ''}`}>
+                  <div key={c.id} className={`dash-card card-lining-left lining-green shadow-elegant transition-all hover:scale-[1.01] bg-gradient-to-br from-card to-background ${isExpanded ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}>
                     <div className="dash-card-accent accent-green" />
                     <div 
                       className="dash-card-header"
                       onClick={() => setExpandedId(isExpanded ? null : c.id)}
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <Avatar name={c.name} size="lg" className="ring-2 ring-glass-border ring-offset-2 ring-offset-background" />
+                        <Avatar name={c.name} src={(c as any).avatar_url} size="lg" className="ring-2 ring-glass-border ring-offset-2 ring-offset-background" />
                         <div className="min-w-0">
-                          <h3 className="font-bold text-base truncate">{c.name}</h3>
+                          <h3 className="font-bold text-sm break-words leading-tight">{c.name}</h3>
                           <div className="flex items-center gap-2">
-                            <p className="text-xs text-muted-foreground truncate">{c.email || "No email"}</p>
+                            <p className="text-[10px] text-muted-foreground break-words leading-tight mt-0.5">{c.email || "No email"}</p>
                             {c.company && (
-                              <>
-                                <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-                                <p className="text-xs text-primary font-medium truncate">{c.company}</p>
-                              </>
+                              <p className="text-[10px] text-primary font-bold break-words mt-0.5">{c.company}</p>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button className={`h-8 w-8 rounded-lg grid place-items-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-green-500/10 text-green-500' : 'text-muted-foreground'}`}>
-                          <ChevronDown className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5">
+                        <button className={`h-7 w-7 rounded-lg grid place-items-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-green-500/10 text-green-500' : 'text-muted-foreground'}`}>
+                          <ChevronDown className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
                     
                     {isExpanded && (
-                      <div className="dash-card-content border-t border-glass-border/50 pt-6">
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          <div className="space-y-3">
-                            <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Information</h4>
-                            <div className="space-y-2">
-                              {c.email && (
-                                <div className="flex items-center gap-3 text-sm text-foreground/80">
-                                  <Mail className="h-4 w-4 text-green-500" /> {c.email}
-                                </div>
-                              )}
-                              {c.phone && (
-                                <div className="flex items-center gap-3 text-sm text-foreground/80">
-                                  <Phone className="h-4 w-4 text-green-500" /> {c.phone}
-                                </div>
-                              )}
-                              {c.job_role && (
-                                <div className="flex items-center gap-3 text-sm text-foreground/80">
-                                  <Briefcase className="h-4 w-4 text-green-500" /> {c.job_role}
-                                </div>
-                              )}
-                            </div>
+                      <div className="dash-card-content border-t border-glass-border/50 p-4 bg-muted/5">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-2.5">
+                            {c.email && (
+                              <div className="flex items-center gap-2 text-[11px] text-blue-500 font-bold tracking-tight">
+                                <Mail className="h-3.5 w-3.5" /> {c.email}
+                              </div>
+                            )}
+                            {c.phone && (
+                              <div className="flex items-center gap-2 text-[11px] text-green-600 font-bold tracking-tight">
+                                <Phone className="h-3.5 w-3.5" /> {c.phone}
+                              </div>
+                            )}
+                            {c.job_role && (
+                              <div className="flex items-center gap-2 text-[11px] text-amber-600 font-bold tracking-tight">
+                                <Briefcase className="h-3.5 w-3.5" /> {c.job_role}
+                              </div>
+                            )}
+                            {c.company && (
+                              <div className="flex items-center gap-2 text-[11px] text-purple-600 font-bold tracking-tight">
+                                <Building2 className="h-3.5 w-3.5" /> {c.company}
+                              </div>
+                            )}
                             {c.notes && (
-                              <div className="mt-4 p-3 rounded-xl bg-muted/20 border border-glass-border text-xs text-muted-foreground italic">
+                              <div className="mt-2 p-3 rounded-xl bg-primary/5 border border-primary/10 text-[11px] text-muted-foreground italic break-words relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                                 "{c.notes}"
                               </div>
                             )}
                           </div>
-                          <div className="space-y-3">
-                            <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Actions</h4>
-                            <div className="flex flex-wrap gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={(e) => { e.stopPropagation(); startCall(c.name); }}
-                                className="rounded-xl border-glass-border hover:bg-green-500/5 hover:text-green-500 h-9"
-                              >
-                                <Video className="h-3.5 w-3.5 mr-2" /> Start Call
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={(e) => { e.stopPropagation(); remove(c.id); }} 
-                                className="rounded-xl text-destructive hover:bg-destructive/10 h-9"
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                              </Button>
-                            </div>
+                          <div className="flex flex-wrap gap-2 pt-3 border-t border-glass-border/30">
+                            <Button 
+                              size="sm" 
+                              onClick={(e) => { e.stopPropagation(); startCall(c.name); }}
+                              className="rounded-lg bg-green-500 hover:bg-green-600 text-white shadow-glow h-9 text-[11px] font-bold px-4"
+                            >
+                              <Video className="h-3.5 w-3.5 mr-1.5" /> Start Call
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="rounded-lg border-blue-500/30 text-blue-600 hover:bg-blue-500/10 h-9 text-[11px] font-bold px-4"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Profile
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={(e) => { e.stopPropagation(); remove(c.id); }} 
+                              className="rounded-lg text-red-500 hover:bg-red-500/10 h-9 text-[11px] font-bold ml-auto"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
+                            </Button>
                           </div>
                         </div>
                       </div>

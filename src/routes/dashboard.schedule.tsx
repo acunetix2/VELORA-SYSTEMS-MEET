@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Copy, Plus, Trash2, ChevronDown, Clock, Video, FileText, ArrowRight, Users, Loader2, Timer, Shield } from "lucide-react";
+import { Calendar, Copy, Plus, Trash2, ChevronDown, Clock, Video, FileText, ArrowRight, Users, Loader2, Timer, Shield, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateMeetingId } from "@/lib/meeting";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
+import { 
+  Dialog, DialogContent, DialogTrigger 
+} from "@/components/ui/dialog";
 import { format, setHours, setMinutes, parseISO, addMinutes, isAfter, isBefore, subMinutes } from "date-fns";
 import { Bell, CheckCircle, AlertTriangle } from "lucide-react";
 
@@ -225,7 +228,7 @@ function Page() {
     <DashboardShell title="Schedule">
       <div className="px-4 sm:px-6 py-8 max-w-6xl mx-auto grid lg:grid-cols-[400px_1fr] gap-8 items-start">
         {/* Left column: Create */}
-        <div className="dash-card sticky top-8">
+        <div className="dash-card card-lining-left sticky top-8">
           <div className="dash-card-accent accent-blue" />
           <div className="p-6">
             <h2 className="text-lg font-bold flex items-center gap-2 mb-6">
@@ -362,7 +365,9 @@ function Page() {
                     {[5,10,25,50].map(n => (
                       <button key={n} type="button" onClick={() => setCapacity(n)}
                         className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${
-                          capacity === n ? 'bg-primary text-primary-foreground' : 'bg-card/60 border border-glass-border text-muted-foreground hover:text-primary hover:border-primary/40'
+                          capacity === n 
+                            ? "bg-primary/10 text-primary font-bold border border-primary/20"
+                            : "text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/10 border border-transparent"
                         }`}>{n}</button>
                     ))}
                   </div>
@@ -429,7 +434,7 @@ function Page() {
                 <Label htmlFor="n" className="text-[11px] text-muted-foreground font-bold ml-1">Agenda / notes</Label>
                 <Textarea id="n" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What's on the agenda?" className="bg-card/40 border-glass-border rounded-xl focus:ring-blue-500/20 min-h-[100px]" />
               </div>
-              <Button onClick={add} className="w-full h-14 bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-2xl font-black text-lg mt-4 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Button onClick={add} className="w-full h-10 bg-primary text-primary-foreground border-0 shadow-glow rounded-xl font-bold mt-4 transition-all hover:scale-[1.02] active:scale-[0.98]">
                 Schedule Meeting
               </Button>
             </div>
@@ -471,116 +476,113 @@ function Page() {
                 const isUpcoming = isBefore(now, startDate);
 
                 return (
-                  <div key={m.id} className={`dash-card ${isExpanded ? 'ring-2 ring-primary/20 shadow-brand' : ''} ${isPassed ? 'opacity-70 grayscale-[0.3] pointer-events-none cursor-not-allowed select-none' : ''}`}>
+                  <div key={m.id} className={`dash-card card-lining-left lining-green shadow-elegant transition-all hover:scale-[1.01] bg-gradient-to-br from-card/80 to-background/40 ${isExpanded ? 'ring-2 ring-primary/20 border-primary/30' : ''} ${isPassed ? 'opacity-70 grayscale-[0.3] pointer-events-none cursor-not-allowed select-none' : ''}`}>
                     <div className={`dash-card-accent ${isPassed ? 'bg-muted' : isActive ? 'bg-brand-green' : 'bg-primary'}`} />
                     <div 
-                      className="dash-card-header"
+                      className="dash-card-header bg-blue-500/5"
                       onClick={() => setExpandedId(isExpanded ? null : m.id)}
                     >
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className={`h-12 w-12 rounded-2xl flex flex-col items-center justify-center border shrink-0 ${
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`h-10 w-10 rounded-xl flex flex-col items-center justify-center border shrink-0 ${
                           isPassed ? 'bg-muted/10 border-muted text-muted-foreground' : 
                           isActive ? 'bg-brand-green/10 border-brand-green/20 text-brand-green' : 
                           'bg-primary/10 border-primary/20 text-primary'
                         }`}>
-                          <span className="text-[10px] font-black leading-none uppercase">{format(startDate, 'MMM')}</span>
-                          <span className="text-lg font-black leading-none">{format(startDate, 'dd')}</span>
+                          <span className="text-[8px] font-black leading-none">{format(startDate, 'MMM')}</span>
+                          <span className="text-xs font-black leading-none">{format(startDate, 'dd')}</span>
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-black text-base truncate">{m.title}</h3>
-                            {isActive && <span className="flex h-2 w-2 rounded-full bg-brand-green animate-pulse" />}
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-xs break-words leading-tight">{m.title}</h3>
+                            {isActive && <span className="flex h-1.5 w-1.5 rounded-full bg-brand-green animate-pulse" />}
                           </div>
-                          <p className="text-xs text-muted-foreground font-medium">
-                            {format(startDate, 'hh:mm aa')} — {format(endDate, 'hh:mm aa')}
-                            <span className="mx-2 opacity-30">|</span>
-                            {isPassed ? <span className="text-destructive font-bold uppercase tracking-wider">Expired / Ended</span> : isActive ? "Active now" : "Upcoming"}
+                          <p className="text-[9px] text-muted-foreground font-medium mt-0.5">
+                            {format(startDate, 'HH:mm')} — {format(endDate, 'HH:mm')}
+                            <span className="mx-1.5 opacity-30">|</span>
+                            {isPassed ? <span className="text-destructive font-bold uppercase">Ended</span> : isActive ? "Active" : "Upcoming"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {isPassed ? (
-                          <CheckCircle className="h-5 w-5 text-muted-foreground/40" />
-                        ) : isActive ? (
-                          <div className="px-2.5 py-1 rounded-full bg-brand-green/20 text-brand-green text-[10px] font-black uppercase tracking-widest animate-in fade-in duration-500">
-                            Live
-                          </div>
-                        ) : (
-                          <div className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
-                            {format(startDate, 'HH:mm')}
-                          </div>
-                        )}
-                        <button className={`h-8 w-8 rounded-lg grid place-items-center transition-all duration-300 ${isExpanded ? 'rotate-180 bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-                          <ChevronDown className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5">
+                        {!isPassed && (isActive ? (
+                          <div className="px-1.5 py-0.5 rounded-full bg-brand-green/20 text-brand-green text-[9px] font-black uppercase">Live</div>
+                        ) : null)}
+                        <button className={`h-7 w-7 rounded-lg grid place-items-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
+                          <ChevronDown className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="dash-card-content border-t border-glass-border/50 pt-6 bg-gradient-to-b from-muted/5 to-transparent">
-                        <div className="grid md:grid-cols-2 gap-8">
-                          <div className="space-y-5">
+                      <div className="dash-card-content border-t border-glass-border/50 p-4 bg-muted/5">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-3">
                             {m.previewImageUrl && (
-                              <div className="mb-6 rounded-2xl overflow-hidden border border-glass-border shadow-brand h-40 group/img relative">
-                                <img src={m.previewImageUrl} alt="Meeting preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                                  <span className="text-white text-[10px] font-black uppercase tracking-widest opacity-80">Session Visual</span>
-                                </div>
-                              </div>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <div className="rounded-xl overflow-hidden border border-glass-border h-24 relative shadow-sm cursor-zoom-in hover:brightness-110 transition-all group/img">
+                                    <img src={m.previewImageUrl} alt="Meeting preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Sparkles className="h-6 w-6 text-white" />
+                                    </div>
+                                  </div>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl p-0 overflow-hidden glass border-glass-border rounded-3xl">
+                                  <div className="relative aspect-video">
+                                    <img src={m.previewImageUrl} alt="Full size preview" className="w-full h-full object-contain" />
+                                    <div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                                      <h2 className="text-2xl font-black text-white tracking-tight">{m.title}</h2>
+                                      <p className="text-sm text-white/60 font-medium">{format(startDate, 'PPPP')}</p>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
                             )}
-                            <div>
-                              <h4 className="text-[10px] tracking-[0.2em] font-black text-muted-foreground uppercase mb-3">Session intelligence</h4>
-                              <div className="space-y-3 text-sm font-medium">
-                                <div className="flex items-center gap-3 text-foreground/80"><Video className="h-4 w-4 text-primary" /> Platform: Velora Enterprise</div>
-                                <div className="flex items-center gap-3 text-foreground/80"><Clock className="h-4 w-4 text-primary" /> Duration: {(m as any).duration} minutes</div>
-                                <div className="flex items-center gap-3 text-foreground/80"><Users className="h-4 w-4 text-primary" /> Capacity: {(m as any).capacity || 100} members</div>
-                              </div>
+                            <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
+                              <div className="flex flex-col gap-0.5 bg-blue-500/5 p-2 rounded-lg border border-blue-500/10 text-blue-600"><span>Platform</span> Velora</div>
+                              <div className="flex flex-col gap-0.5 bg-green-500/5 p-2 rounded-lg border border-green-500/10 text-green-600"><span>Duration</span> {(m as any).duration}m</div>
+                              <div className="flex flex-col gap-0.5 bg-amber-500/5 p-2 rounded-lg border border-amber-500/10 text-amber-600"><span>Guests</span> {(m as any).capacity || 100}</div>
                             </div>
                             {m.notes && (
-                              <div>
-                                <h4 className="text-[10px] tracking-[0.2em] font-black text-muted-foreground uppercase mb-3">Agenda</h4>
-                                <div className="p-4 rounded-2xl bg-card/60 border border-glass-border text-sm text-foreground/80 leading-relaxed shadow-sm">
-                                  <p>{m.notes}</p>
-                                </div>
+                              <div className="p-3 rounded-xl bg-card/60 border border-glass-border text-[11px] text-foreground/80 leading-relaxed italic relative">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/20" />
+                                <p className="break-words line-clamp-3 ml-1">"{m.notes}"</p>
                               </div>
                             )}
                           </div>
-                          <div className="space-y-6">
-                            <h4 className="text-[10px] tracking-[0.2em] font-black text-muted-foreground uppercase">Management Console</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                              <Button 
-                                onClick={() => navigate({ to: "/meet/$meetingId", params: { meetingId: m.meetingId } })}
-                                disabled={isPassed}
-                                className={`h-12 rounded-xl border-0 font-black text-sm shadow-glow ${isPassed ? 'bg-muted text-muted-foreground' : 'bg-gradient-primary text-primary-foreground'}`}
-                              >
-                                {isPassed ? "Meeting Ended" : "Enter Room"} <ArrowRight className="h-4 w-4 ml-2" />
-                              </Button>
-                              <Button variant="outline" onClick={() => copyLink(m.meetingId)} className="rounded-xl h-12 border-glass-border hover:bg-primary/5 hover:text-primary font-bold">
-                                <Copy className="h-4 w-4 mr-2" /> Invite Team
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" className="rounded-xl h-12 border-glass-border hover:bg-primary/5 hover:text-primary w-full font-bold">
-                                    <Calendar className="h-4 w-4 mr-2" /> Calendar Sync
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="glass border-glass-border p-2 min-w-[180px]">
-                                  <DropdownMenuItem className="rounded-lg h-10 px-3 font-medium" onClick={() => window.open(generateGoogleCalendarLink(m.title, m.when, m.notes, m.meetingId), "_blank")}>
-                                    Google Calendar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="rounded-lg h-10 px-3 font-medium" onClick={() => downloadICS(m.title, m.when, m.notes, m.meetingId)}>
-                                    Download (.ics)
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                              <Button 
-                                variant="ghost" 
-                                onClick={() => remove(m.id)} 
-                                className="rounded-xl h-12 text-destructive hover:bg-destructive/10 font-bold"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" /> Cancel
-                              </Button>
-                            </div>
+                          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-glass-border/30">
+                            <Button 
+                              onClick={() => navigate({ to: "/meet/$meetingId", params: { meetingId: m.meetingId } })}
+                              disabled={isPassed}
+                              className={`h-10 rounded-xl border-0 font-bold text-[11px] shadow-glow ${isPassed ? 'bg-muted text-muted-foreground' : 'bg-green-600 hover:bg-green-500 text-white'}`}
+                            >
+                              <Video className="h-3.5 w-3.5 mr-1.5" /> Join Now
+                            </Button>
+                            <Button variant="outline" onClick={() => copyLink(m.meetingId)} className="rounded-xl h-10 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[11px] font-bold">
+                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Copy Link
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="rounded-xl h-10 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 text-[11px] font-bold w-full">
+                                  <Calendar className="h-3.5 w-3.5 mr-1.5" /> Calendar
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="glass border-glass-border p-1 text-[11px]">
+                                <DropdownMenuItem onClick={() => window.open(generateGoogleCalendarLink(m.title, m.when, m.notes, m.meetingId), "_blank")}>
+                                  Google Calendar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => downloadICS(m.title, m.when, m.notes, m.meetingId)}>
+                                  Download .ics
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => remove(m.id)} 
+                              className="rounded-xl h-10 text-red-500 hover:bg-red-500/10 text-[11px] font-bold"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Cancel Session
+                            </Button>
                           </div>
                         </div>
                       </div>

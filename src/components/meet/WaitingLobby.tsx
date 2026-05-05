@@ -238,9 +238,12 @@ export function WaitingLobby({
               <div className="flex gap-3">
                 <Button
                   onClick={() => onToggleAudio(!audioOn)}
-                  variant={audioOn ? "default" : "destructive"}
                   size="lg"
-                  className="flex-1 gap-2 h-11"
+                  className={`flex-1 gap-2 h-11 border-0 transition-all duration-300 ${
+                    audioOn 
+                      ? "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20" 
+                      : "bg-destructive hover:bg-destructive/90 text-white"
+                  }`}
                 >
                   {audioOn ? (
                     <>
@@ -257,9 +260,12 @@ export function WaitingLobby({
 
                 <Button
                   onClick={() => onToggleVideo(!videoOn)}
-                  variant={videoOn ? "default" : "destructive"}
                   size="lg"
-                  className="flex-1 gap-2 h-11"
+                  className={`flex-1 gap-2 h-11 border-0 transition-all duration-300 ${
+                    videoOn 
+                      ? "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20" 
+                      : "bg-destructive hover:bg-destructive/90 text-white"
+                  }`}
                 >
                   {videoOn ? (
                     <>

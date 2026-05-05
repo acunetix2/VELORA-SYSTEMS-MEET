@@ -128,7 +128,7 @@ function Page() {
                         {it.videoUrl ? <Video className="h-6 w-6 text-rose-500" /> : <FileText className="h-6 w-6 text-rose-500" />}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-bold text-base truncate">Meeting: {it.meetingId}</h3>
+                        <h3 className="font-bold text-base break-words">Meeting: {it.meetingId}</h3>
                         <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
                           <Clock className="h-3 w-3" /> {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {it.videoUrl ? "Video + " : ""}{it.transcript.length} lines
                         </p>
@@ -165,7 +165,7 @@ function Page() {
                                     return (
                                       <div key={i} className="flex gap-2">
                                         <span className="text-rose-500 font-bold shrink-0">{speaker}:</span>
-                                        <span className="text-foreground/80">{rest.join(':')}</span>
+                                        <span className="text-foreground/80 break-words">{rest.join(':')}</span>
                                       </div>
                                     );
                                   })}

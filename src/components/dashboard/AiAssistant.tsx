@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { 
   X, Send, Bot, User, Sparkles, Loader2, 
-  MessageCircle, Headphones, Info, ShieldCheck,
-  ChevronRight
+  ChevronRight, ThumbsUp, Copy, Share2, Mail, Linkedin, Mic
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +24,10 @@ type Message = {
 
 export function AiAssistant({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! I'm Velora AI, your assistant. How can I help you today?" }
+    { 
+      role: "assistant", 
+      content: "Welcome to Velora Meet. I'm here to assist you with any questions or concerns about our privacy-first video conferencing platform. What's on your mind?\n\nTopics I can help with:\n* Product features and updates\n* Meeting setup and management\n* Troubleshooting common issues\n* Velora ecosystem and integrations\n\nLet me know how I can help." 
+    }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -127,8 +135,77 @@ export function AiAssistant({ open, onOpenChange }: { open: boolean; onOpenChang
                   ? "bg-primary text-primary-foreground hover:shadow-glow shadow-primary/10" 
                   : "bg-card/40 border border-glass-border text-foreground hover:bg-card/60 shadow-black/5"
               }`}>
-                {m.content}
+                {m.content.split("\n").map((line, idx) => {
+                  const trimmed = line.trim();
+                  
+                  // Detect separators
+                  if (/^[-=]{3,}$/.test(trimmed)) {
+                    return <div key={idx} className="my-4 h-px bg-gradient-to-r from-transparent via-glass-border to-transparent" />;
+                  }
+
+                  const clean = line
+                    .replace(/\*\*/g, "")
+                    .replace(/###/g, "")
+                    .replace(/##/g, "")
+                    .replace(/#/g, "")
+                    .replace(/==/g, "")
+                    .trim();
+                  
+                  if (!clean) return null;
+                  
+                  if (trimmed.startsWith("*") || trimmed.startsWith("-")) {
+                    return (
+                      <div key={idx} className="flex gap-2 items-start mt-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                        <span>{clean.replace(/^[\*\-]\s*/, "")}</span>
+                      </div>
+                    );
+                  }
+                  
+                  return <p key={idx} className={idx > 0 ? "mt-2" : ""}>{clean}</p>;
+                })}
               </div>
+              
+              {m.role === "assistant" && (
+                <div className="flex items-center gap-1.5 px-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <button 
+                    onClick={() => {
+                      toast.success("Feedback recorded");
+                      setMessages(prev => [...prev, { role: "assistant", content: "Thank you! I'm glad you found that helpful. Is there anything else you'd like to know?" }]);
+                    }}
+                    className="h-6 w-6 rounded-md grid place-items-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <ThumbsUp className="h-3 w-3" />
+                  </button>
+                  <button 
+                    onClick={() => { navigator.clipboard.writeText(m.content); toast.success("Copied to clipboard"); }}
+                    className="h-6 w-6 rounded-md grid place-items-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="h-6 w-6 rounded-md grid place-items-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors">
+                        <Share2 className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="glass border-glass-border p-1 w-44 shadow-xl">
+                      <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied"); }}>
+                        <Copy className="h-3.5 w-3.5 mr-2" /> Copy link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open(`https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=Velora AI&body=${encodeURIComponent(window.location.href)}`, "_blank")}>
+                        <img src="https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png" className="h-4 w-4 mr-2" alt="Gmail" /> Gmail
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.href)}`, "_blank")}>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="h-4 w-4 mr-2" alt="WhatsApp" /> WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank")}>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" className="h-4 w-4 mr-2" alt="LinkedIn" /> LinkedIn
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -144,23 +221,46 @@ export function AiAssistant({ open, onOpenChange }: { open: boolean; onOpenChang
           </div>
         )}
       </div>
-
       {/* Input */}
       <div className="p-6 border-t border-glass-border bg-sidebar/10 backdrop-blur-xl">
-        <form onSubmit={sendMessage} className="relative group">
-          <Input 
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="How can I help you today?"
-            className="h-14 bg-card/30 border-glass-border rounded-[20px] pl-5 pr-14 focus:ring-primary/20 focus:bg-card/50 transition-all placeholder:text-muted-foreground/40 text-sm shadow-inner"
-          />
-          <Button 
-            type="submit" 
-            disabled={!input.trim() || loading}
-            className="absolute right-1.5 top-1.5 h-11 w-11 rounded-[16px] bg-gradient-brand text-primary-foreground shadow-brand hover:scale-105 active:scale-95 transition-all duration-300 border-0"
-          >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          </Button>
+        <form onSubmit={sendMessage} className="relative flex items-center gap-2 group">
+          <div className="relative flex-1">
+            <Input 
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="How can I help you today?"
+              className="h-14 bg-card/30 border-glass-border rounded-[22px] pl-16 pr-28 focus:ring-primary/20 focus:bg-card/50 transition-all placeholder:text-muted-foreground/40 text-sm shadow-inner text-foreground dark:text-white"
+            />
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className="absolute left-1.5 top-1.5 h-11 w-11 rounded-[16px] bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition-all duration-300"
+              onClick={() => toast.info("Image analysis coming soon to Velora AI.")}
+            >
+              <Sparkles className="h-5 w-5" />
+            </Button>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-13 top-1.5 h-11 w-11 rounded-[16px] bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition-all"
+              onClick={() => toast.info("Voice input is coming soon.")}
+            >
+              <Mic className="h-5 w-5" />
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!input.trim() || loading}
+              className={`absolute right-1.5 top-1.5 h-11 w-11 rounded-[16px] transition-all duration-300 border-0 ${
+                input.trim() 
+                  ? "bg-primary text-primary-foreground shadow-brand hover:scale-105 active:scale-95" 
+                  : "bg-zinc-100 text-zinc-400 dark:bg-white/5 dark:text-zinc-600 cursor-not-allowed"
+              }`}
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            </Button>
+          </div>
         </form>
         <div className="mt-4 flex items-center justify-center gap-3 opacity-30">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-muted-foreground" />

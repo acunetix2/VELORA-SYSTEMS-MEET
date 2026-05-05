@@ -127,7 +127,7 @@ function Landing() {
   const ctaTo = user ? "/dashboard" : "/auth";
   
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground transition-smooth">
       <SiteHeader />
 
       {/* Hero */}
@@ -164,7 +164,7 @@ function Landing() {
             <div className="rounded-2xl overflow-hidden bg-card/40 aspect-[16/9] grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 p-2 sm:p-3">
               {[
                 { name: "Maya Chen", initial: "M", gradient: "from-blue-500 to-indigo-500", text: "text-blue-500" },
-                { name: "Diego Rivera", initial: "D", gradient: "from-emerald-500 to-teal-500", text: "text-emerald-500" },
+                { name: "Diego Rivera", initial: "D", gradient: "from-green-500 to-teal-500", text: "text-green-500" },
                 { name: "Aisha Khan", initial: "A", gradient: "from-amber-500 to-orange-500", text: "text-amber-500" },
                 { name: "You", initial: "Y", gradient: "bg-gradient-primary", text: "text-primary" },
               ].map((p, i) => (

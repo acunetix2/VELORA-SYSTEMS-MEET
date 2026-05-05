@@ -1,3 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 140 30% 98%;
+    --foreground: 140 40% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 140 40% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 40% 10%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 140 20% 96%;
+    --secondary-foreground: 140 40% 10%;
+    --muted: 140 20% 96%;
+    --muted-foreground: 140 10% 45%;
+    --accent: 142 76% 96%;
+    --accent-foreground: 142 76% 36%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --border: 140 20% 88%;
+    --input: 140 20% 88%;
+    --ring: 142 76% 36%;
+    --radius: 0.75rem;
+    --glass-background: 0 0% 100% / 0.8;
+    --glass-border: 142 20% 85% / 0.6;
+    --sidebar: 140 30% 98%;
+  }
+
+  .dark {
+    --background: 140 40% 4%;
+    --foreground: 140 20% 98%;
+    --card: 140 40% 6%;
+    --card-foreground: 140 20% 98%;
+    --popover: 140 40% 6%;
+    --popover-foreground: 140 20% 98%;
+    --primary: 142 72% 59%;
+    --primary-foreground: 140 40% 4%;
+    --secondary: 140 30% 12%;
+    --secondary-foreground: 140 20% 98%;
+    --muted: 140 30% 12%;
+    --muted-foreground: 140 10% 65%;
+    --accent: 142 70% 15%;
+    --accent-foreground: 142 70% 45%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 70% 45%;
+    --success-foreground: 140 40% 4%;
+    --border: 140 30% 15%;
+    --input: 140 30% 15%;
+    --ring: 142 70% 45%;
+    --glass-background: 140 40% 6% / 0.7;
+    --glass-border: 140 30% 20% / 0.5;
+    --sidebar: 140 40% 4%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.925rem;
+    font-style: normal !important;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  * {
+    font-style: normal !important;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+@layer utilities {
+  .card-lining-left {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-lining-left::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, hsl(var(--primary)), #3b82f6);
+  }
+
+  .card-lining-bottom {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-lining-bottom::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: linear-gradient(to right, hsl(var(--primary)), #3b82f6);
+  }
+
+  .transition-smooth {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  .shadow-glow {
+    box-shadow: none !important;
+  }
+
+  .shadow-elegant {
+    box-shadow: none !important;
+  }
+
+  .shadow-brand {
+    box-shadow: none !important;
+  }
+
+  .glass {
+    background-color: hsl(var(--glass-background));
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  .glass-card {
+    background-color: hsl(var(--glass-background));
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border));
+    transition: all 0.3s ease-in-out;
+    border-radius: 1rem;
+    box-shadow: none !important;
+  }
+  
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .dash-card {
+    background-color: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border) / 1);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .dash-card:hover {
+    background-color: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--primary) / 0.6);
+  }
+
+  .bg-brand-green {
+    background-color: #22c55e;
+  }
+
+  .text-brand-green {
+    color: #059669;
+  }
+
+  .dark .text-brand-green {
+    color: #34d399;
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(to right, #059669, #4ade80);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .dark .text-gradient {
+    background-image: linear-gradient(to right, #34d399, #86efac);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-gradient-primary {
+    background-image: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  }
+
+  .bg-gradient-brand {
+    background-image: linear-gradient(to bottom right, #16a34a, #22c55e, #4ade80);
+  }
+
+  .animate-ticker {
+    display: flex;
+    width: max-content;
+    animation: ticker 40s linear infinite;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .card-lining-left {
+    position: relative;
+  }
+  .card-lining-left::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 15%;
+    bottom: 15%;
+    width: 3px;
+    border-radius: 0 4px 4px 0;
+    background-color: var(--lining-color, hsl(var(--primary)));
+    transition: all 0.3s ease;
+  }
+
+  .card-lining-bottom {
+    position: relative;
+  }
+  .card-lining-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 15%;
+    right: 15%;
+    height: 3px;
+    border-radius: 4px 4px 0 0;
+    background-color: var(--lining-color, hsl(var(--primary)));
+    transition: all 0.3s ease;
+  }
+
+  .lining-blue { --lining-color: #3b82f6; }
+  .lining-green { --lining-color: #22c55e; }
+  .lining-amber { --lining-color: #f59e0b; }
+  .lining-purple { --lining-color: #8b5cf6; }
+}
