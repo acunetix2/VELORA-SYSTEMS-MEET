@@ -288,8 +288,11 @@ export function WaitingLobby({
               >
                 {isWaiting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Waiting for host…
+                    <div className="relative h-4 w-4 flex items-center justify-center mr-3">
+                      <div className="absolute h-full w-full rounded-full bg-white animate-ping opacity-40" />
+                      <div className="relative h-2 w-2 rounded-full bg-white animate-pulse" />
+                    </div>
+                    Synchronizing...
                   </>
                 ) : (
                   <>

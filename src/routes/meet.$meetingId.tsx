@@ -52,7 +52,7 @@ const SOUNDS = {
   leave: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
   chat: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
   hand: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
-  knock: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
+  knock: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
 };
 
 const playNotificationSound = (type: keyof typeof SOUNDS) => {
@@ -380,8 +380,13 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
 
   if (loading) return (
     <FullScreen>
-      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-      <p className="text-muted-foreground text-sm font-medium">Verifying access...</p>
+      <div className="relative mb-6">
+        <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute" />
+        <div className="h-10 w-10 rounded-full bg-primary/40 animate-pulse relative grid place-items-center">
+           <ShieldCheck className="h-5 w-5 text-primary" />
+        </div>
+      </div>
+      <p className="text-muted-foreground text-xs font-bold tracking-widest uppercase">Verifying access protocol...</p>
     </FullScreen>
   );
 
