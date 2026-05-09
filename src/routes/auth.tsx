@@ -72,7 +72,7 @@ function AuthPage() {
           password: parsed.data.password,
           options: {
             data: { display_name: parsed.data.displayName },
-            emailRedirectTo: `https://velora-systems-meet.vercel.app/dashboard`,
+            emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         });
         if (error) {
@@ -154,12 +154,31 @@ function AuthPage() {
     }
   };
 
+  const resetPassword = async () => {
+    if (!email) {
+      toast.error("Enter your email address first");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=signin`,
+      });
+      if (error) throw error;
+      toast.success("Reset link sent to your email");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Reset failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const signInWithSocial = async (provider: "google" | "github") => {
     try {
       setBusy(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `https://velora-systems-meet.vercel.app/dashboard` },
+        options: { redirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) throw error;
     } catch (e) {
@@ -318,7 +337,7 @@ function AuthPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between ml-1">
                     <Label htmlFor="pw" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Password</Label>
-                    {mode === "signin" && <button type="button" className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
+                    {mode === "signin" && <button type="button" onClick={resetPassword} className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
                   </div>
                   <Input
                     id="pw"
