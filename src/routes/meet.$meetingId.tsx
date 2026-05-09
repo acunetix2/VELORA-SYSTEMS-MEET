@@ -52,7 +52,7 @@ const SOUNDS = {
   leave: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
   chat: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
   hand: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
-  knock: "https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3",
+  knock: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
 };
 
 const playNotificationSound = (type: keyof typeof SOUNDS) => {
