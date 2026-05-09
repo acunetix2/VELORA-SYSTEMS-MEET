@@ -174,12 +174,17 @@ function MeetingContainer() {
   return <MeetingRoomInner onLeave={setLeftStatus} />;
 }
 
-function MeetingInfoBtn({ session, peopleCount }: { session: any, peopleCount: number }) {
+function MeetingInfoBtn({ session, peopleCount, meetingId }: { session: any, peopleCount: number, meetingId: string }) {
   const title = session?.title || "Untitled Meeting";
   const desc = session?.description || "No description provided for this session.";
   const image = session?.image_url || session?.imageUrl;
   const host = session?.host?.display_name || "Organized by Velora";
   const capacity = session?.capacity || 100;
+  const meetingUrl = window.location.href;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(meetingUrl).then(() => toast.success("Link copied to clipboard"));
+  };
 
   return (
     <Dialog>
@@ -199,36 +204,70 @@ function MeetingInfoBtn({ session, peopleCount }: { session: any, peopleCount: n
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-4 left-6 right-6">
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">Meeting Details</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">Meeting Intelligence</span>
             <h2 className="text-2xl font-black text-foreground mt-2 line-clamp-1">{title}</h2>
           </div>
         </div>
         
         <div className="p-6 pt-2 space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {desc}
-            </p>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">About session</p>
+              <p className="text-xs text-muted-foreground leading-relaxed px-1">
+                {desc}
+              </p>
+            </div>
+
+            <div className="bg-muted/30 rounded-2xl p-4 space-y-3 border border-glass-border">
+               <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Meeting Code</p>
+                    <p className="text-xs font-mono font-bold text-primary">{meetingId}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    navigator.clipboard.writeText(meetingId);
+                    toast.success("Code copied");
+                  }} className="h-7 rounded-lg text-[10px] font-bold px-3">Copy</Button>
+               </div>
+               <div className="h-[1px] bg-glass-border" />
+               <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 min-w-0 flex-1 mr-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Meeting Link</p>
+                    <p className="text-[10px] font-medium text-muted-foreground truncate">{meetingUrl}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={copyLink} className="h-7 rounded-lg text-[10px] font-bold px-3">Copy Link</Button>
+               </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Host</span>
-              <span className="text-xs font-bold truncate">{host}</span>
+            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex items-center gap-3">
+               <div className="h-8 w-8 rounded-full bg-primary/10 text-primary grid place-items-center shrink-0">
+                  <Crown className="h-4 w-4" />
+               </div>
+               <div className="min-w-0">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Host</span>
+                  <span className="text-[11px] font-bold truncate block">{host}</span>
+               </div>
             </div>
-            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex flex-col gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Participants</span>
-              <span className="text-xs font-bold">{peopleCount} / {capacity}</span>
+            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex items-center gap-3">
+               <div className="h-8 w-8 rounded-full bg-primary/10 text-primary grid place-items-center shrink-0">
+                  <Users className="h-4 w-4" />
+               </div>
+               <div className="min-w-0">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">Presence</span>
+                  <span className="text-[11px] font-bold block">{peopleCount} / {capacity}</span>
+               </div>
             </div>
           </div>
 
           <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center shadow-inner">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold">Secure Session</p>
-              <p className="text-[10px] text-muted-foreground">End-to-end encrypted and moderated by host.</p>
+              <p className="text-xs font-bold">Secure Infrastructure</p>
+              <p className="text-[10px] text-muted-foreground">Standard E2EE enabled. Data is processed locally on participant devices.</p>
             </div>
           </div>
         </div>
@@ -1044,7 +1083,7 @@ function Room({
           )}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <MeetingInfoBtn session={session} peopleCount={peopleCount} />
+          <MeetingInfoBtn session={session} peopleCount={peopleCount} meetingId={meetingId} />
           <NetworkDiagnosticsBtn rtc={rtc} />
           {rtc.locked && (
             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] glass rounded-md px-2 py-1 text-warning">
