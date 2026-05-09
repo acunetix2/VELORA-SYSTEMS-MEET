@@ -380,13 +380,13 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
 
   if (loading) return (
     <FullScreen>
-      <div className="relative mb-6">
-        <div className="h-10 w-10 rounded-full bg-primary/20 animate-ping absolute" />
-        <div className="h-10 w-10 rounded-full bg-primary/40 animate-pulse relative grid place-items-center">
-           <ShieldCheck className="h-5 w-5 text-primary" />
+      <div className="relative mb-4">
+        <div className="h-6 w-6 rounded-full bg-primary/20 animate-ping absolute" />
+        <div className="h-6 w-6 rounded-full bg-primary/40 animate-pulse relative grid place-items-center">
+           <ShieldCheck className="h-3 w-3 text-primary" />
         </div>
       </div>
-      <p className="text-muted-foreground text-xs font-bold tracking-widest uppercase">Verifying access protocol...</p>
+      <p className="text-muted-foreground text-[10px] tracking-[0.2em] uppercase">Verifying access protocol...</p>
     </FullScreen>
   );
 
