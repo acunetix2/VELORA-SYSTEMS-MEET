@@ -410,9 +410,9 @@ function DashboardInner() {
 
             <Button
               onClick={() => setSetupOpen(true)}
-              className="mt-5 w-full h-12 bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow text-base"
+              className="mt-5 w-full h-10 bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow text-sm font-bold"
             >
-              <Video className="h-5 w-5 mr-2" /> Start meeting
+              <Video className="h-4 w-4 mr-2" /> Start
             </Button>
           </div>
 
@@ -420,53 +420,53 @@ function DashboardInner() {
             <DialogContent className="glass border-glass-border sm:max-w-[480px] p-0 overflow-hidden rounded-[2rem]">
               <div className="h-2 bg-gradient-to-r from-blue-600 to-cyan-400" />
               <div className="p-8">
-                <DialogHeader className="mb-6">
-                  <DialogTitle className="text-2xl font-black flex items-center gap-2">
-                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 grid place-items-center">
-                      <Video className="h-5 w-5 text-blue-500" />
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-xl font-black flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 grid place-items-center">
+                      <Video className="h-4 w-4 text-blue-500" />
                     </div>
                     Meeting Setup
                   </DialogTitle>
-                  <DialogDescription className="text-muted-foreground font-medium">
-                    Configure your instant meeting before going live.
+                  <DialogDescription className="text-[11px] text-muted-foreground font-medium">
+                    Configure your session parameters before starting.
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Meeting Title</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Meeting Title</Label>
                     <Input 
                       placeholder="e.g. Design Review" 
                       value={meetingTitle}
                       onChange={(e) => setMeetingTitle(e.target.value)}
-                      className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-blue-500/20"
+                      className="bg-card/40 border-glass-border h-10 rounded-xl focus:ring-blue-500/20 text-sm"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Agenda / Description</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Agenda / Description</Label>
                     <Textarea 
                       placeholder="What's this meeting about?" 
                       value={meetingDesc}
                       onChange={(e) => setMeetingDesc(e.target.value)}
-                      className="bg-card/40 border-glass-border rounded-xl focus:ring-blue-500/20 min-h-[100px]"
+                      className="bg-card/40 border-glass-border rounded-xl focus:ring-blue-500/20 min-h-[80px] text-sm"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Meeting Preview Image</Label>
-                    <div className="flex gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Meeting Preview Image</Label>
+                    <div className="flex gap-3">
                       <div className="flex-1 relative">
                         <Input 
                           type="file" 
                           accept="image/*" 
                           onChange={handleImageUpload}
-                          className="bg-card/40 border-glass-border h-12 rounded-xl file:hidden pt-3 text-xs" 
+                          className="bg-card/40 border-glass-border h-10 rounded-xl file:hidden pt-2.5 text-[10px]" 
                         />
-                        {uploading && <div className="absolute right-3 top-3"><Loader2 className="h-5 w-5 animate-spin text-blue-500" /></div>}
+                        {uploading && <div className="absolute right-3 top-2.5"><Loader2 className="h-4 w-4 animate-spin text-blue-500" /></div>}
                       </div>
                       {meetingImage && (
-                        <div className="h-12 w-12 rounded-xl overflow-hidden border border-glass-border shrink-0 shadow-sm">
+                        <div className="h-10 w-10 rounded-lg overflow-hidden border border-glass-border shrink-0 shadow-sm">
                           <img src={meetingImage} alt="Preview" className="h-full w-full object-cover" />
                         </div>
                       )}
@@ -474,15 +474,15 @@ function DashboardInner() {
                   </div>
                 </div>
 
-                <div className="mt-8 flex gap-3">
-                  <Button variant="ghost" onClick={() => setSetupOpen(false)} className="flex-1 rounded-xl h-12 font-bold">
+                <div className="mt-6 flex gap-3">
+                  <Button variant="ghost" onClick={() => setSetupOpen(false)} className="flex-1 rounded-xl h-10 font-bold text-xs">
                     Cancel
                   </Button>
                   <Button 
                     onClick={startMeeting} 
-                    className="flex-1 bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl h-12 font-black uppercase tracking-widest text-[11px]"
+                    className="flex-1 bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl h-10 font-black uppercase tracking-widest text-[10px]"
                   >
-                    Go Live Now <ArrowRight className="h-4 w-4 ml-1.5" />
+                    Start <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Button>
                 </div>
               </div>
