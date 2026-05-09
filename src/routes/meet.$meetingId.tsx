@@ -30,6 +30,7 @@ import {
   Users, Wifi, WifiOff, Activity, Loader2, ShieldAlert, MicOff as MicOffIcon, Minimize2, Maximize2,
   Smile, Hand, MessageCircleQuestion, FileText, Circle, StopCircle, Presentation, BarChart3, Settings as SettingsIcon,
   Timer, BarChart2, CheckCircle2, ShieldCheck, LayoutGrid, Plus, MoreVertical, GraduationCap, Building2, ChevronRight,
+  Info, Video
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,6 +40,11 @@ import { trackMeetingJoin } from "@/lib/analytics";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 
 const SOUNDS = {
