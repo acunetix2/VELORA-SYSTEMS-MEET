@@ -416,6 +416,7 @@ function Room({
   session: any;
   onLeave: (status: "ended" | "left") => void;
 }) {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const rtc = useWebRTC({ meetingId, identity, isCreator, privacy: initialPrivacy });
   const captions = useCaptions(identity.name);
