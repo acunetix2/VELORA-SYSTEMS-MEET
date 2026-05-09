@@ -175,13 +175,11 @@ function MeetingContainer() {
 }
 
 function MeetingInfoBtn({ session, peopleCount }: { session: any, peopleCount: number }) {
-  if (!session) return null;
-  
-  const title = session.title || "Untitled Meeting";
-  const desc = session.description || "No description provided for this session.";
-  const image = session.image_url || session.imageUrl;
-  const host = session.host?.display_name || "Organized by Velora";
-  const capacity = session.capacity || 100;
+  const title = session?.title || "Untitled Meeting";
+  const desc = session?.description || "No description provided for this session.";
+  const image = session?.image_url || session?.imageUrl;
+  const host = session?.host?.display_name || "Organized by Velora";
+  const capacity = session?.capacity || 100;
 
   return (
     <Dialog>
