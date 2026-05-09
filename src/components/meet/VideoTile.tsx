@@ -40,8 +40,10 @@ export function VideoTile({
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
-    if (ref.current && stream) ref.current.srcObject = stream;
-  }, [stream, videoOn]);
+    if (ref.current && stream) {
+      ref.current.srcObject = stream;
+    }
+  }, [stream]);
 
   useEffect(() => {
     if (!audioOn || !stream) {
@@ -83,20 +85,21 @@ export function VideoTile({
 
   let ringClass = "";
   if (spotlight) ringClass = "ring-2 ring-primary/60 shadow-glow";
-  else if (handRaised) ringClass = "ring-2 ring-warning/70";
-  else if (isSpeaking) ringClass = "ring-2 ring-success/80 shadow-glow transition-all duration-75";
+  else if (handRaised) ringClass = "ring-2 ring-warning/70 shadow-glow shadow-warning/20";
+  else if (isSpeaking) ringClass = "ring-[3px] ring-brand-green animate-speaking transition-all duration-150 scale-[1.02] z-10";
 
   return (
     <div className={`relative rounded-xl sm:rounded-2xl overflow-hidden glass transition-smooth min-h-[120px] h-full w-full ${ringClass}`}>
-      {videoOn && stream ? (
+      {stream && (
         <video
           ref={ref}
           autoPlay
           playsInline
           muted={muted || isLocal}
-          className={`w-full h-full object-cover ${isLocal ? "scale-x-[-1]" : ""} ${softFocus ? "blur-[6px]" : ""}`}
+          className={`w-full h-full object-cover ${isLocal ? "scale-x-[-1]" : ""} ${softFocus ? "blur-[6px]" : ""} ${!videoOn ? "invisible h-0 w-0" : ""}`}
         />
-      ) : (
+      )}
+      {(!videoOn || !stream) && (
         <div
           className="absolute inset-0 grid place-items-center"
           style={{ backgroundImage: colorForName(name, color) }}

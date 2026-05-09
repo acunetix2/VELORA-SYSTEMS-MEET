@@ -79,77 +79,76 @@ function Page() {
                 <div key={m.id} className={`dash-card ${isExpanded ? 'ring-2 ring-primary/20 border-primary/30 shadow-none' : ''}`}>
                   <div className="dash-card-accent accent-purple" />
                   <div 
-                    className="dash-card-header"
+                    className="dash-card-header cursor-pointer select-none px-5 py-4"
                     onClick={() => setExpandedId(isExpanded ? null : m.id)}
                   >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="h-12 w-12 rounded-2xl bg-purple-500/10 grid place-items-center border border-purple-500/20 shrink-0">
-                        <Video className="h-6 w-6 text-purple-500" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden">
+                      <div className="h-9 w-9 rounded-xl bg-purple-500/10 grid place-items-center border border-purple-500/20 shrink-0">
+                        <Video className="h-4 w-4 text-purple-500" />
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-mono font-bold text-base truncate uppercase tracking-tight">{m.id}</h3>
-                        <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
-                          <Clock className="h-3 w-3" /> {date.toLocaleDateString()} at {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <h3 className="font-mono font-semibold text-[13px] truncate tracking-tight text-foreground">{m.id}</h3>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{date.toLocaleDateString()} at {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="hidden sm:flex items-center gap-2">
-                        {m.privacy === "private" ? (
-                          <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 uppercase tracking-tighter flex items-center gap-1">
-                            <Lock className="h-2.5 w-2.5" /> Private
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md border border-green-500/20 uppercase tracking-tighter flex items-center gap-1">
-                            <Globe2 className="h-2.5 w-2.5" /> Open
-                          </span>
-                        )}
-                      </div>
-                      <button className={`h-8 w-8 rounded-lg grid place-items-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-purple-500/10 text-purple-500' : 'text-muted-foreground'}`}>
-                        <ChevronDown className="h-4 w-4" />
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      {m.privacy === "private" ? (
+                        <span className="hidden sm:flex text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 items-center gap-1 shrink-0">
+                          <Lock className="h-2.5 w-2.5" /> Private
+                        </span>
+                      ) : (
+                        <span className="hidden sm:flex text-[10px] font-semibold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20 items-center gap-1 shrink-0">
+                          <Globe2 className="h-2.5 w-2.5" /> Open
+                        </span>
+                      )}
+                      <button className={`h-7 w-7 rounded-lg grid place-items-center transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180 bg-purple-500/10 text-purple-500' : 'text-muted-foreground'}`}>
+                        <ChevronDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div className="dash-card-content border-t border-glass-border/50 pt-6">
-                      <div className="grid sm:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Session Security</h4>
-                          <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-1 h-2 w-2 rounded-full ${m.privacy === 'private' ? 'bg-amber-500' : 'bg-green-500'}`} />
-                              <div className="space-y-0.5">
-                                <p className="text-sm font-bold">{m.privacy === 'private' ? 'End-to-End Private' : 'Public Access'}</p>
-                                <p className="text-xs text-muted-foreground">
+                    <div className="px-5 py-5 border-t border-glass-border/50">
+                      <div className="grid sm:grid-cols-2 gap-5">
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold text-muted-foreground tracking-wide">Session security</h4>
+                          <div className="space-y-2.5">
+                            <div className="flex items-start gap-2.5">
+                              <div className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${m.privacy === 'private' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                              <div className="space-y-0.5 min-w-0">
+                                <p className="text-[13px] font-semibold">{m.privacy === 'private' ? 'End-to-end private' : 'Public access'}</p>
+                                <p className="text-[11px] text-muted-foreground leading-relaxed">
                                   {m.privacy === 'private' 
                                     ? 'Requires host approval for new participants to join.' 
                                     : 'Anyone with the meeting code can join this session.'}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3 text-sm font-medium text-foreground/70">
-                              <ShieldCheck className="h-4 w-4 text-purple-500" />
+                            <div className="flex items-center gap-2 text-[12px] font-medium text-foreground/70">
+                              <ShieldCheck className="h-3.5 w-3.5 text-purple-500 shrink-0" />
                               Encrypted connection verified
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Quick Rejoin</h4>
-                          <div className="flex flex-col gap-2">
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold text-muted-foreground tracking-wide">Quick rejoin</h4>
+                          <div className="flex flex-col gap-1.5">
                             <Button 
                               onClick={() => navigate({ to: "/meet/$meetingId", params: { meetingId: m.id } })}
-                              className="bg-primary hover:opacity-90 text-primary-foreground rounded-xl h-11 border-0 shadow-lg shadow-primary/20 font-bold"
+                              className="w-full bg-primary hover:opacity-90 text-primary-foreground rounded-xl h-9 border-0 shadow-md shadow-primary/20 font-semibold text-[13px]"
                             >
-                              Rejoin Meeting <ArrowRight className="h-4 w-4 ml-2" />
+                              Rejoin meeting <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                             </Button>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Button variant="outline" onClick={() => copy(m.id)} className="rounded-xl h-10 border-glass-border hover:bg-primary/5 hover:text-primary font-bold">
-                                <Share2 className="h-4 w-4 mr-2" /> Copy Link
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <Button variant="outline" onClick={() => copy(m.id)} className="rounded-xl h-8 border-glass-border hover:bg-primary/5 hover:text-primary font-semibold text-[11px]">
+                                <Share2 className="h-3 w-3 mr-1" /> Copy link
                               </Button>
-                              <Button variant="outline" className="rounded-xl h-10 border-glass-border hover:bg-primary/5 hover:text-primary font-bold">
-                                <Copy className="h-4 w-4 mr-2" /> Copy ID
+                              <Button variant="outline" onClick={() => navigator.clipboard.writeText(m.id).then(() => toast.success("Meeting ID copied"))} className="rounded-xl h-8 border-glass-border hover:bg-primary/5 hover:text-primary font-semibold text-[11px]">
+                                <Copy className="h-3 w-3 mr-1" /> Copy ID
                               </Button>
                             </div>
                           </div>

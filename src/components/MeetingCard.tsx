@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Avatar, colorForName } from "@/components/Avatar";
+import { Avatar } from "@/components/Avatar";
 import {
   Copy, ArrowRight, Lock, Globe2, Users, Clock, Calendar,
   MoreVertical, Trash2, Share2, Loader2,
@@ -68,15 +68,12 @@ export function MeetingCard({
     ? createdDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
     : createdDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
-  // Determine if meeting is active (expired meetings shouldn't be active)
-  const isExpired = false; // Could implement this with expiresAt check
-
   return (
     <>
       <Link
         to="/meet/$meetingId"
         params={{ meetingId }}
-        className={`group relative block ${className}`}
+        className={`group relative block ${className ?? ""}`}
       >
         <div className="glass card-lining-left lining-green rounded-xl overflow-hidden border border-glass-border hover:border-primary/50 transition-all hover:bg-card/40 h-full flex flex-col group/card shadow-elegant">
           {/* Header with vibrant gradient background */}
@@ -182,16 +179,16 @@ export function MeetingCard({
             <Button
               onClick={handleRejoin}
               disabled={isLoading}
-              className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow h-9 text-xs gap-2"
+              className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow h-8 text-[10px] gap-2"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                   Joining…
                 </>
               ) : (
                 <>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3 w-3" />
                   Rejoin
                 </>
               )}

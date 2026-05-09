@@ -22,6 +22,7 @@ export function useNotifications() {
     const { data, error } = await supabase
       .from("notifications" as any)
       .select("*")
+      .eq("user_id", user.id)
       .order("ts", { ascending: false });
     
     if (!error && data) {
@@ -40,17 +41,27 @@ export function useNotifications() {
   useEffect(() => {
     fetchItems();
     
-    // Subscribe to new notifications
-    const channel = supabase
-      .channel('notifications-changes')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications' },
-        () => fetchItems()
-      )
-      .subscribe();
+    let channel: any;
 
-    return () => { supabase.removeChannel(channel); };
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      channel = supabase
+        .channel(`notifications-changes-${Math.random().toString(36).substring(2, 10)}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          () => fetchItems()
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
+
+    return () => { 
+      if (channel) supabase.removeChannel(channel); 
+    };
   }, [fetchItems]);
 
   const push = async (n: Partial<Notification>) => {

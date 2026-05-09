@@ -2,6 +2,17 @@ import { useEffect, useState } from "react";
 
 export type Reaction = { id: string; emoji: string; from: string; ts: number };
 
+const EMOJI_ASSETS: Record<string, string> = {
+  "👍": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44d/512.webp",
+  "❤️": "https://fonts.gstatic.com/s/e/notoemoji/latest/2764_fe0f/512.webp",
+  "🎉": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f389/512.webp",
+  "👏": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f44f/512.webp",
+  "😂": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.webp",
+  "😮": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f62e/512.webp",
+  "🙏": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f64f/512.webp",
+  "🔥": "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.webp",
+};
+
 /** Floating, auto-disappearing emoji reactions overlay (Zoom-style). */
 export function ReactionsLayer({ reactions }: { reactions: Reaction[] }) {
   // Filter to only those <4s old so we never render stale items after re-mount.
@@ -20,6 +31,8 @@ export function ReactionsLayer({ reactions }: { reactions: Reaction[] }) {
         const seed = parseInt(r.id.slice(0, 8), 16) || 1;
         const left = 10 + (seed % 80); // 10–90%
         const drift = ((seed >> 4) % 30) - 15; // -15..14 px sway
+        const assetUrl = EMOJI_ASSETS[r.emoji];
+
         return (
           <div
             key={r.id}
@@ -30,8 +43,12 @@ export function ReactionsLayer({ reactions }: { reactions: Reaction[] }) {
               animation: "reaction-rise 4s ease-out forwards",
             }}
           >
-            <span className="text-4xl drop-shadow-glow">{r.emoji}</span>
-            <span className="text-[10px] glass rounded-full px-2 py-0.5 mt-1 text-foreground/80">
+            {assetUrl ? (
+              <img src={assetUrl} alt={r.emoji} className="h-16 w-16 object-contain drop-shadow-xl" />
+            ) : (
+              <span className="text-4xl drop-shadow-glow">{r.emoji}</span>
+            )}
+            <span className="text-[10px] glass rounded-full px-2 py-0.5 mt-1 text-foreground font-bold shadow-sm">
               {r.from}
             </span>
           </div>
@@ -39,10 +56,11 @@ export function ReactionsLayer({ reactions }: { reactions: Reaction[] }) {
       })}
       <style>{`
         @keyframes reaction-rise {
-          0%   { transform: translateY(0)    scale(0.6); opacity: 0; }
-          15%  { transform: translateY(-30px) scale(1);   opacity: 1; }
-          90%  { transform: translateY(-260px) scale(1);  opacity: 1; }
-          100% { transform: translateY(-320px) scale(0.9); opacity: 0; }
+          0%   { transform: translateY(0)    scale(0.5); opacity: 0; }
+          15%  { transform: translateY(-40px) scale(1.1); opacity: 1; }
+          25%  { transform: translateY(-70px) scale(1);   opacity: 1; }
+          90%  { transform: translateY(-280px) scale(1);  opacity: 1; }
+          100% { transform: translateY(-340px) scale(0.9); opacity: 0; }
         }
       `}</style>
     </div>

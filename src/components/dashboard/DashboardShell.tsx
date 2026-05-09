@@ -98,7 +98,7 @@ export function DashboardShell({ children, title, actions }: {
           ))}
           
           <div className="px-3 py-2 mt-4 mb-1">
-            <span className={`text-[11px] font-bold text-muted-foreground/60 ${collapsed ? "hidden" : "block"}`}>
+            <span className={`text-[11px] font-bold text-muted-foreground ${collapsed ? "hidden" : "block"}`}>
               Management
             </span>
             {collapsed && <div className="h-px bg-glass-border/40 w-full" />}
@@ -286,17 +286,21 @@ function SidebarLink({ item, active, collapsed, onClick }: {
       onClick={onClick}
       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 border border-transparent ${
         active
-          ? isAiHub 
+          ? isAiHub
             ? "bg-blue-600/10 text-blue-600 font-black border-blue-600/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
-            : "bg-primary/10 text-primary font-bold border-primary/20 shadow-glow shadow-primary/5"
-          : "text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/10"
+            : "bg-foreground/8 dark:bg-primary/10 text-foreground dark:text-primary font-bold border-foreground/15 dark:border-primary/30 shadow-sm"
+          : "text-muted-foreground hover:text-foreground dark:hover:text-primary hover:bg-foreground/5 dark:hover:bg-primary/5 hover:border-foreground/10 dark:hover:border-primary/20"
       } ${collapsed ? "justify-center" : ""}`}
       title={collapsed ? item.label : undefined}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""} ${isAiHub && active ? "animate-pulse" : ""}`} />
+      <Icon className={`h-4 w-4 shrink-0 ${
+        active
+          ? isAiHub ? "text-blue-600" : "text-foreground dark:text-primary"
+          : ""
+      } ${isAiHub && active ? "animate-pulse" : ""}`} />
       {!collapsed && <span className="truncate">{item.label}</span>}
       {!collapsed && item.badge && (
-        <span className={`ml-auto text-[9px] font-black rounded-md px-1.5 py-0.5 shadow-sm ${isAiHub ? 'bg-primary text-white' : 'bg-green-500 text-white'}`}>
+        <span className={`ml-auto text-[9px] font-black rounded-md px-1.5 py-0.5 shadow-sm ${isAiHub ? 'bg-primary text-white' : 'bg-primary text-primary-foreground'}`}>
           {item.badge}
         </span>
       )}

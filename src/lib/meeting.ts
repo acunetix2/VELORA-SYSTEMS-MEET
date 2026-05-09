@@ -50,6 +50,9 @@ export type LocalMeeting = {
   capacity?: number;
   /** Optional expiry timestamp (ms). After this, the room can't be joined. */
   expiresAt?: number | null;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
 };
 
 const MEET_KEY = (id: string) => `velora:meeting:${id}`;

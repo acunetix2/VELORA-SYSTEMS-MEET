@@ -8,6 +8,15 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter 
+} from "@/components/ui/dialog";
 import { MeetingCard } from "@/components/MeetingCard";
 import { useEffect, useState } from "react";
 import {
@@ -39,6 +48,7 @@ import {
   Zap,
   HeartHandshake,
   BrainCircuit,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -79,20 +89,52 @@ function DashboardInner() {
 
   const displayName = profile?.display_name || getDisplayName(user);
 
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingDesc, setMeetingDesc] = useState("");
+  const [meetingImage, setMeetingImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    setUploading(true);
+    const path = `${user.id}/instant_${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from("meeting-previews")
+      .upload(path, file);
+
+    if (error) {
+      toast.error("Failed to upload image");
+      setUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from("meeting-previews").getPublicUrl(path);
+    setMeetingImage(publicUrl);
+    setUploading(false);
+  };
+
   const startMeeting = async () => {
     const id = generateMeetingId();
     setStoredName(displayName);
     const expiresAt = expiry > 0 ? Date.now() + expiry * 60 * 60 * 1000 : null;
     
-    // Save to local for legacy support
-    saveLocalMeeting({
+    const meetingData = {
       id,
       privacy,
       createdAt: Date.now(),
       hostUserId: user?.id ?? null,
       capacity,
       expiresAt,
-    });
+      title: meetingTitle.trim() || "Untitled Meeting",
+      description: meetingDesc.trim(),
+      imageUrl: meetingImage || undefined,
+    };
+
+    // Save to local for legacy support
+    saveLocalMeeting(meetingData);
 
     // Save to DB for true role-based access
     if (user) {
@@ -101,9 +143,13 @@ function DashboardInner() {
         host_id: user.id,
         privacy,
         capacity,
+        title: meetingTitle.trim() || "Untitled Meeting",
+        description: meetingDesc.trim(),
+        image_url: meetingImage,
       });
     }
 
+    setSetupOpen(false);
     navigate({
       to: "/meet/$meetingId",
       params: { meetingId: id },
@@ -134,7 +180,7 @@ function DashboardInner() {
     day: "numeric",
   });
 
-  const [analytics, setAnalytics] = useState({ hostCount: 0, participantCount: 0, totalMeetings: 0, history: [] as any[] });
+  const [analytics, setAnalytics] = useState({ hostCount: 0, participantCount: 0, totalMeetings: 0, totalMinutes: 0, history: [] as any[] });
   const [trends, setTrends] = useState<number[]>(new Array(12).fill(0));
 
   useEffect(() => {
@@ -164,21 +210,25 @@ function DashboardInner() {
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="dash-card p-4 flex flex-col gap-1">
               <span className="text-[10px] font-bold text-muted-foreground/60">Sessions hosted</span>
-              <span className="text-2xl font-black text-primary">{analytics.hostCount}</span>
+              <span className="text-2xl font-black text-blue-600">{analytics.hostCount}</span>
             </div>
             <div className="dash-card p-4 flex flex-col gap-1">
               <span className="text-[10px] font-bold text-muted-foreground/60">Participants</span>
-              <span className="text-2xl font-black text-primary">{analytics.participantCount}</span>
+              <span className="text-2xl font-black text-blue-600">{analytics.participantCount}</span>
             </div>
             <div className="dash-card p-4 flex flex-col gap-1">
               <span className="text-[10px] font-bold text-muted-foreground/60">Total time</span>
-              <span className="text-2xl font-black text-primary">{analytics.totalMeetings * 45}m</span>
+              <span className="text-2xl font-black text-blue-600">
+                {analytics.totalMinutes >= 60
+                  ? `${Math.floor(analytics.totalMinutes / 60)}h ${analytics.totalMinutes % 60}m`
+                  : `${analytics.totalMinutes}m`}
+              </span>
             </div>
             <div className="dash-card p-4 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground/60">Engagement</span>
+              <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Engagement</span>
               <div className="flex items-end gap-1 h-8 mt-1">
                 {trends.map((t, i) => (
-                  <div key={i} className="flex-1 bg-primary/20 rounded-t-sm transition-all hover:bg-primary/40" style={{ height: `${Math.max(t, 10)}%` }} />
+                  <div key={i} className="flex-1 bg-blue-500/40 rounded-t-sm transition-all hover:bg-blue-600/60" style={{ height: `${Math.max(t, 10)}%` }} />
                 ))}
               </div>
             </div>
@@ -359,12 +409,85 @@ function DashboardInner() {
             </div>
 
             <Button
-              onClick={startMeeting}
+              onClick={() => setSetupOpen(true)}
               className="mt-5 w-full h-12 bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-glow text-base"
             >
               <Video className="h-5 w-5 mr-2" /> Start meeting
             </Button>
           </div>
+
+          <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+            <DialogContent className="glass border-glass-border sm:max-w-[480px] p-0 overflow-hidden rounded-[2rem]">
+              <div className="h-2 bg-gradient-to-r from-blue-600 to-cyan-400" />
+              <div className="p-8">
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="text-2xl font-black flex items-center gap-2">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/10 grid place-items-center">
+                      <Video className="h-5 w-5 text-blue-500" />
+                    </div>
+                    Meeting Setup
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground font-medium">
+                    Configure your instant meeting before going live.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Meeting Title</Label>
+                    <Input 
+                      placeholder="e.g. Design Review" 
+                      value={meetingTitle}
+                      onChange={(e) => setMeetingTitle(e.target.value)}
+                      className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Agenda / Description</Label>
+                    <Textarea 
+                      placeholder="What's this meeting about?" 
+                      value={meetingDesc}
+                      onChange={(e) => setMeetingDesc(e.target.value)}
+                      className="bg-card/40 border-glass-border rounded-xl focus:ring-blue-500/20 min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">Meeting Preview Image</Label>
+                    <div className="flex gap-4">
+                      <div className="flex-1 relative">
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageUpload}
+                          className="bg-card/40 border-glass-border h-12 rounded-xl file:hidden pt-3 text-xs" 
+                        />
+                        {uploading && <div className="absolute right-3 top-3"><Loader2 className="h-5 w-5 animate-spin text-blue-500" /></div>}
+                      </div>
+                      {meetingImage && (
+                        <div className="h-12 w-12 rounded-xl overflow-hidden border border-glass-border shrink-0 shadow-sm">
+                          <img src={meetingImage} alt="Preview" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex gap-3">
+                  <Button variant="ghost" onClick={() => setSetupOpen(false)} className="flex-1 rounded-xl h-12 font-bold">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={startMeeting} 
+                    className="flex-1 bg-gradient-primary text-primary-foreground border-0 shadow-glow rounded-xl h-12 font-black uppercase tracking-widest text-[11px]"
+                  >
+                    Go Live Now <ArrowRight className="h-4 w-4 ml-1.5" />
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Join */}
           <div className="glass rounded-2xl p-5 sm:p-7 bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 relative overflow-hidden group/join shadow-elegant">

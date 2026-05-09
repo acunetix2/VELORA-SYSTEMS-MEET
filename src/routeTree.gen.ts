@@ -31,6 +31,7 @@ import { Route as DashboardScheduleRouteImport } from './routes/dashboard.schedu
 import { Route as DashboardRecordingsRouteImport } from './routes/dashboard.recordings'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
 import { Route as DashboardPartnersRouteImport } from './routes/dashboard.partners'
+import { Route as DashboardNotificationsRouteImport } from './routes/dashboard.notifications'
 import { Route as DashboardMeetingsRouteImport } from './routes/dashboard.meetings'
 import { Route as DashboardFaqRouteImport } from './routes/dashboard.faq'
 import { Route as DashboardEnterpriseRouteImport } from './routes/dashboard.enterprise'
@@ -40,7 +41,9 @@ import { Route as DashboardClassroomRouteImport } from './routes/dashboard.class
 import { Route as DashboardAiRouteImport } from './routes/dashboard.ai'
 import { Route as DashboardAcademyRouteImport } from './routes/dashboard.academy'
 import { Route as DashboardAboutRouteImport } from './routes/dashboard.about'
+import { Route as DashboardClassroomIndexRouteImport } from './routes/dashboard.classroom.index'
 import { Route as DashboardClassroomClassIdRouteImport } from './routes/dashboard.classroom.$classId'
+import { Route as DashboardClassroomSlugClassRouteImport } from './routes/dashboard.classroom.$slug.class'
 
 const UseCasesRoute = UseCasesRouteImport.update({
   id: '/use-cases',
@@ -152,6 +155,11 @@ const DashboardPartnersRoute = DashboardPartnersRouteImport.update({
   path: '/partners',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardNotificationsRoute = DashboardNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardMeetingsRoute = DashboardMeetingsRouteImport.update({
   id: '/meetings',
   path: '/meetings',
@@ -197,10 +205,21 @@ const DashboardAboutRoute = DashboardAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardClassroomIndexRoute = DashboardClassroomIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardClassroomRoute,
+} as any)
 const DashboardClassroomClassIdRoute =
   DashboardClassroomClassIdRouteImport.update({
     id: '/$classId',
     path: '/$classId',
+    getParentRoute: () => DashboardClassroomRoute,
+  } as any)
+const DashboardClassroomSlugClassRoute =
+  DashboardClassroomSlugClassRouteImport.update({
+    id: '/$slug/class',
+    path: '/$slug/class',
     getParentRoute: () => DashboardClassroomRoute,
   } as any)
 
@@ -226,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
@@ -237,6 +257,8 @@ export interface FileRoutesByFullPath {
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/classroom/$classId': typeof DashboardClassroomClassIdRoute
+  '/dashboard/classroom/': typeof DashboardClassroomIndexRoute
+  '/dashboard/classroom/$slug/class': typeof DashboardClassroomSlugClassRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -253,12 +275,12 @@ export interface FileRoutesByTo {
   '/dashboard/about': typeof DashboardAboutRoute
   '/dashboard/academy': typeof DashboardAcademyRoute
   '/dashboard/ai': typeof DashboardAiRoute
-  '/dashboard/classroom': typeof DashboardClassroomRouteWithChildren
   '/dashboard/contacts': typeof DashboardContactsRoute
   '/dashboard/developer': typeof DashboardDeveloperRoute
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
@@ -270,6 +292,8 @@ export interface FileRoutesByTo {
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/classroom/$classId': typeof DashboardClassroomClassIdRoute
+  '/dashboard/classroom': typeof DashboardClassroomIndexRoute
+  '/dashboard/classroom/$slug/class': typeof DashboardClassroomSlugClassRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -294,6 +318,7 @@ export interface FileRoutesById {
   '/dashboard/enterprise': typeof DashboardEnterpriseRoute
   '/dashboard/faq': typeof DashboardFaqRoute
   '/dashboard/meetings': typeof DashboardMeetingsRoute
+  '/dashboard/notifications': typeof DashboardNotificationsRoute
   '/dashboard/partners': typeof DashboardPartnersRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/recordings': typeof DashboardRecordingsRoute
@@ -305,6 +330,8 @@ export interface FileRoutesById {
   '/summary/$meetingId': typeof SummaryMeetingIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/classroom/$classId': typeof DashboardClassroomClassIdRoute
+  '/dashboard/classroom/': typeof DashboardClassroomIndexRoute
+  '/dashboard/classroom/$slug/class': typeof DashboardClassroomSlugClassRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -330,6 +357,7 @@ export interface FileRouteTypes {
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/notifications'
     | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
@@ -341,6 +369,8 @@ export interface FileRouteTypes {
     | '/summary/$meetingId'
     | '/dashboard/'
     | '/dashboard/classroom/$classId'
+    | '/dashboard/classroom/'
+    | '/dashboard/classroom/$slug/class'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -357,12 +387,12 @@ export interface FileRouteTypes {
     | '/dashboard/about'
     | '/dashboard/academy'
     | '/dashboard/ai'
-    | '/dashboard/classroom'
     | '/dashboard/contacts'
     | '/dashboard/developer'
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/notifications'
     | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
@@ -374,6 +404,8 @@ export interface FileRouteTypes {
     | '/summary/$meetingId'
     | '/dashboard'
     | '/dashboard/classroom/$classId'
+    | '/dashboard/classroom'
+    | '/dashboard/classroom/$slug/class'
   id:
     | '__root__'
     | '/'
@@ -397,6 +429,7 @@ export interface FileRouteTypes {
     | '/dashboard/enterprise'
     | '/dashboard/faq'
     | '/dashboard/meetings'
+    | '/dashboard/notifications'
     | '/dashboard/partners'
     | '/dashboard/profile'
     | '/dashboard/recordings'
@@ -408,6 +441,8 @@ export interface FileRouteTypes {
     | '/summary/$meetingId'
     | '/dashboard/'
     | '/dashboard/classroom/$classId'
+    | '/dashboard/classroom/'
+    | '/dashboard/classroom/$slug/class'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -584,6 +619,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPartnersRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/notifications': {
+      id: '/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof DashboardNotificationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/meetings': {
       id: '/dashboard/meetings'
       path: '/meetings'
@@ -647,6 +689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAboutRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/classroom/': {
+      id: '/dashboard/classroom/'
+      path: '/'
+      fullPath: '/dashboard/classroom/'
+      preLoaderRoute: typeof DashboardClassroomIndexRouteImport
+      parentRoute: typeof DashboardClassroomRoute
+    }
     '/dashboard/classroom/$classId': {
       id: '/dashboard/classroom/$classId'
       path: '/$classId'
@@ -654,15 +703,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardClassroomClassIdRouteImport
       parentRoute: typeof DashboardClassroomRoute
     }
+    '/dashboard/classroom/$slug/class': {
+      id: '/dashboard/classroom/$slug/class'
+      path: '/$slug/class'
+      fullPath: '/dashboard/classroom/$slug/class'
+      preLoaderRoute: typeof DashboardClassroomSlugClassRouteImport
+      parentRoute: typeof DashboardClassroomRoute
+    }
   }
 }
 
 interface DashboardClassroomRouteChildren {
   DashboardClassroomClassIdRoute: typeof DashboardClassroomClassIdRoute
+  DashboardClassroomIndexRoute: typeof DashboardClassroomIndexRoute
+  DashboardClassroomSlugClassRoute: typeof DashboardClassroomSlugClassRoute
 }
 
 const DashboardClassroomRouteChildren: DashboardClassroomRouteChildren = {
   DashboardClassroomClassIdRoute: DashboardClassroomClassIdRoute,
+  DashboardClassroomIndexRoute: DashboardClassroomIndexRoute,
+  DashboardClassroomSlugClassRoute: DashboardClassroomSlugClassRoute,
 }
 
 const DashboardClassroomRouteWithChildren =
@@ -678,6 +738,7 @@ interface DashboardRouteChildren {
   DashboardEnterpriseRoute: typeof DashboardEnterpriseRoute
   DashboardFaqRoute: typeof DashboardFaqRoute
   DashboardMeetingsRoute: typeof DashboardMeetingsRoute
+  DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardPartnersRoute: typeof DashboardPartnersRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardRecordingsRoute: typeof DashboardRecordingsRoute
@@ -697,6 +758,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardEnterpriseRoute: DashboardEnterpriseRoute,
   DashboardFaqRoute: DashboardFaqRoute,
   DashboardMeetingsRoute: DashboardMeetingsRoute,
+  DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardPartnersRoute: DashboardPartnersRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardRecordingsRoute: DashboardRecordingsRoute,

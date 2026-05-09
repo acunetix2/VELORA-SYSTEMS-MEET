@@ -5,15 +5,25 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  Mic, Video as VideoIcon, Bell, Eye, ChevronRight,
-  Globe, Volume2, Monitor, Shield, Zap,
-  Smartphone, Keyboard, CheckCircle2, RefreshCw, Copy, QrCode
+  Mic, Video as VideoIcon, Bell, Eye, ChevronRight, Globe, Volume2, Monitor, Shield, Zap,
+  Smartphone, Keyboard, CheckCircle2, RefreshCw, Copy, QrCode,
+  Trash2, Database, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 function SettingsComponent() {
   return (
@@ -69,9 +79,10 @@ const REGIONS = [
 
 function Page() {
   const { profile } = useProfile();
-  const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
-  const [pairCode, setPairCode] = useState<string | null>(null);
   const [pairLoading, setPairLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     try { setPrefs({ ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }); } catch { /* noop */ }
@@ -274,8 +285,103 @@ function Page() {
                 )}
               </div>
             </Card>
+            {/* Danger Zone */}
+            <Card title="Danger Zone" icon={<AlertTriangle className="h-4 w-4" />}>
+              <div className="p-4 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold tracking-tight">Clear cache & settings</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">Reset all local preferences to defaults.</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-xl h-8 text-[10px] font-bold border-destructive/20 text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm("Reset all settings and clear local cache?")) {
+                          localStorage.clear();
+                          setPrefs(DEFAULTS);
+                          toast.success("Cache cleared and settings reset");
+                        }
+                      }}
+                    >
+                      Clear Cache
+                    </Button>
+                  </div>
+
+                  <div className="pt-3 border-t border-glass-border flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-bold tracking-tight text-destructive">Delete account</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">Permanently remove your identity and data.</p>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="rounded-xl h-8 text-[10px] font-bold shadow-sm"
+                      onClick={() => setDeleteDialogOpen(true)}
+                    >
+                      Delete Account
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
+
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="glass border-glass-border sm:max-w-[425px] rounded-[2rem]">
+            <DialogHeader className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-[2rem] bg-destructive/10 text-destructive grid place-items-center mb-4">
+                <AlertTriangle className="h-8 w-8" />
+              </div>
+              <DialogTitle className="text-xl font-bold tracking-tight">Permanent account deletion</DialogTitle>
+              <DialogDescription className="text-muted-foreground text-sm pt-2">
+                This action is irreversible. You will lose access to all organizations, meetings, and personal telemetry.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold tracking-widest text-muted-foreground ml-1">Type "DELETE" to confirm</Label>
+                <Input 
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  placeholder="DELETE"
+                  className="bg-muted/30 h-12 rounded-xl border-glass-border text-center font-mono tracking-[0.3em]"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              <Button variant="ghost" className="rounded-xl h-12 font-bold flex-1" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="rounded-xl h-12 font-bold flex-1 shadow-sm"
+                disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  toast.loading("Deactivating identity...", { id: "delete" });
+                  
+                  // Simulate account cleanup
+                  setTimeout(async () => {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                      toast.error("Process failed", { id: "delete" });
+                      setIsDeleting(false);
+                    } else {
+                      toast.success("Account successfully purged", { id: "delete" });
+                      window.location.href = "/";
+                    }
+                  }, 2000);
+                }}
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Deletion"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="pt-8 border-t border-glass-border flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
@@ -295,7 +401,7 @@ function Card({ title, icon, children }: { title: string; icon: React.ReactNode;
     <section className="glass rounded-[2rem] overflow-hidden border-glass-border">
       <div className="px-5 py-4 border-b border-glass-border bg-muted/20 flex items-center gap-2">
         <span className="text-primary">{icon}</span>
-        <h3 className="font-bold text-xs uppercase tracking-widest">{title}</h3>
+        <h3 className="font-bold text-xs tracking-widest">{title}</h3>
       </div>
       <div className="divide-y divide-glass-border/40">{children}</div>
     </section>

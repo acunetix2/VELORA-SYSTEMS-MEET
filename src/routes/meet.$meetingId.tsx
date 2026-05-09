@@ -40,8 +40,41 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 
+
+const SOUNDS = {
+  join: "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
+  leave: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
+  chat: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
+  hand: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
+  knock: "https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3",
+};
+
+const playNotificationSound = (type: keyof typeof SOUNDS) => {
+  if (typeof Audio === "undefined") return;
+  try {
+    const audio = new Audio(SOUNDS[type]);
+    audio.volume = 0.4;
+    audio.play().catch(() => {
+      // Ignore autoplay errors
+    });
+  } catch (e) {
+    console.warn("Failed to play sound", e);
+  }
+};
+
 const searchSchema = z.object({
   mode: z.enum(["open", "private"]).optional().catch(undefined),
+});
+
+export const Route = createFileRoute("/meet/$meetingId")({
+  validateSearch: searchSchema,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Velora Meet - ${params.meetingId}` },
+      { name: "description", content: "Live video meeting on Velora." },
+    ],
+  }),
+  component: MeetingComponent,
 });
 
 function MeetingComponent() {
@@ -127,23 +160,77 @@ function MeetingAuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export const Route = createFileRoute("/meet/$meetingId")({
-  validateSearch: searchSchema,
-  head: ({ params }) => ({
-    meta: [
-      { title: `Meeting ${params.meetingId} — Velora Meet` },
-      { name: "description", content: "Live video meeting on Velora." },
-    ],
-  }),
-  component: MeetingComponent,
-});
-
 const TRANSCRIPT_KEY = (id: string) => `velora:transcript:${id}`;
 
 function MeetingContainer() {
   const [leftStatus, setLeftStatus] = useState<"ended" | "left" | null>(null);
   if (leftStatus) return <LeftMeetingScreen status={leftStatus} />;
   return <MeetingRoomInner onLeave={setLeftStatus} />;
+}
+
+function MeetingInfoBtn({ session, peopleCount }: { session: any, peopleCount: number }) {
+  if (!session) return null;
+  
+  const title = session.title || "Untitled Meeting";
+  const desc = session.description || "No description provided for this session.";
+  const image = session.image_url || session.imageUrl;
+  const host = session.host?.display_name || "Organized by Velora";
+  const capacity = session.capacity || 100;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all">
+          <Info className="h-5 w-5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="glass border-glass-border sm:max-w-[440px] p-0 overflow-hidden rounded-[2.5rem] shadow-brand">
+        <div className="relative h-40 bg-gradient-to-br from-blue-600/20 to-primary/10">
+          {image ? (
+            <img src={image} alt="Meeting preview" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full grid place-items-center opacity-30">
+              <Video className="h-16 w-16 text-primary" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute bottom-4 left-6 right-6">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">Meeting Details</span>
+            <h2 className="text-2xl font-black text-foreground mt-2 line-clamp-1">{title}</h2>
+          </div>
+        </div>
+        
+        <div className="p-6 pt-2 space-y-6">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {desc}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Host</span>
+              <span className="text-xs font-bold truncate">{host}</span>
+            </div>
+            <div className="bg-card/40 border border-glass-border rounded-2xl p-4 flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Participants</span>
+              <span className="text-xs font-bold">{peopleCount} / {capacity}</span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold">Secure Session</p>
+              <p className="text-[10px] text-muted-foreground">End-to-end encrypted and moderated by host.</p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function LeftMeetingScreen({ status }: { status: "ended" | "left" }) {
@@ -191,6 +278,7 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
 
   const local = getLocalMeeting(meetingId);
   const [isCreator, setIsCreator] = useState<boolean | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -202,18 +290,20 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
           return;
         }
 
-        // Check DB for actual host_id
+        // Check DB for actual host_id and metadata
         const { data } = await supabase
           .from("meeting_sessions" as any)
-          .select("host_id")
+          .select("*, host:profiles(*)")
           .eq("meeting_id", meetingId)
           .maybeSingle();
 
         if (data) {
           setIsCreator(data.host_id === user.id);
+          setSession(data);
         } else {
           // Fallback to local storage if not in DB yet (e.g. legacy/instant)
           setIsCreator(!!local && local.hostUserId === user.id);
+          setSession(local);
         }
       } catch (err) {
         console.error("Error verifying meeting access:", err);
@@ -404,6 +494,34 @@ function Room({
   useEffect(() => { if (side === "chat") setUnreadChat(0); }, [side]);
   useEffect(() => { if (side === "qna") setUnreadQna(0); }, [side]);
   useEffect(() => { if (side === "notes") setUnreadNotes(0); }, [side]);
+
+  // ---- Audio Notifications ----
+  const lastPeersCount = useRef(rtc.peers.length);
+  useEffect(() => {
+    if (rtc.peers.length > lastPeersCount.current) {
+      playNotificationSound("join");
+    } else if (rtc.peers.length < lastPeersCount.current) {
+      playNotificationSound("leave");
+    }
+    lastPeersCount.current = rtc.peers.length;
+  }, [rtc.peers.length]);
+
+  const lastWaitingCount = useRef(rtc.waiting.length);
+  useEffect(() => {
+    if (rtc.waiting.length > lastWaitingCount.current) {
+      playNotificationSound("knock");
+    }
+    lastWaitingCount.current = rtc.waiting.length;
+  }, [rtc.waiting.length]);
+
+  const lastChatLen = useRef(chat.length);
+  useEffect(() => {
+    if (chat.length > lastChatLen.current) {
+      const last = chat[chat.length - 1];
+      if (last && !last.self) playNotificationSound("chat");
+    }
+    lastChatLen.current = chat.length;
+  }, [chat.length]);
 
   const sendChat = (text: string) => {
     const msg = { id: uuidv4(), from: identity.name, text, ts: Date.now() };
@@ -618,7 +736,10 @@ function Room({
 
     ch.on("broadcast", { event: "hand" }, ({ payload }: { payload: { from: string; name: string; raised: boolean } }) => {
       setRaisedHands((prev) => ({ ...prev, [payload.from]: payload.raised }));
-      if (payload.raised) toast(`✋ ${payload.name} raised their hand`);
+      if (payload.raised) {
+        toast(`✋ ${payload.name} raised their hand`);
+        if (payload.from !== rtc.selfId) playNotificationSound("hand");
+      }
     });
 
     ch.on("broadcast", { event: "screenshare-request" }, ({ payload }: { payload: { from: string; name: string } }) => {
@@ -807,15 +928,25 @@ function Room({
       .then(() => toast.success("Meeting link copied — share it with anyone"));
   };
 
-  const leave = () => {
+  const leave = useCallback(async () => {
     captions.stop();
-    if (recording.recording) recording.stop();
-    try {
-      navigate({ to: "/summary/$meetingId", params: { meetingId } });
-    } catch {
-      navigate({ to: "/dashboard" });
+    if (recording.recording) await recording.stop();
+    // Save duration to analytics before leaving
+    const durationMs = timer.display;
+    if (durationMs > 0) {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (u) {
+        const durationSecs = Math.floor(durationMs / 1000);
+        await supabase
+          .from("meeting_history" as any)
+          .update({ duration_seconds: durationSecs })
+          .eq("user_id", u.id)
+          .eq("meeting_id", meetingId);
+      }
     }
-  };
+    rtc.cleanup?.();
+    onLeave("left");
+  }, [captions, recording, timer.display, meetingId, rtc, onLeave]);
 
   // ---- Pre-join screens ----
   if (rtc.status === "connecting") {
@@ -907,6 +1038,7 @@ function Room({
           )}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <MeetingInfoBtn session={session} peopleCount={peopleCount} />
           <NetworkDiagnosticsBtn rtc={rtc} />
           {rtc.locked && (
             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] glass rounded-md px-2 py-1 text-warning">
@@ -924,6 +1056,29 @@ function Room({
 
       <div className="flex-1 flex overflow-hidden relative">
         <main className="flex-1 p-2 sm:p-4 md:p-6 overflow-hidden relative">
+          {rtc.peers.length === 0 && rtc.status === "joined" && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 text-center">
+              <div className="glass rounded-[2rem] px-8 py-6 border-glass-border shadow-glow flex flex-col items-center gap-3 animate-in fade-in zoom-in duration-700">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">You're the only one here</h3>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto leading-relaxed">
+                    Share the meeting link with others to start collaborating.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={copyLink}
+                  className="rounded-xl gap-2 font-bold pointer-events-auto border-primary/30 hover:bg-primary/5"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy link
+                </Button>
+              </div>
+            </div>
+          )}
           {effectivePinned ? (
             // Spotlight layout: one large tile + scrollable strip
             <div className="h-full flex flex-col md:flex-row gap-2 sm:gap-4">
@@ -1138,13 +1293,9 @@ function Room({
             {side === "whiteboard" && (
               <div className="flex-1 overflow-hidden">
                 <WhiteboardPanel
-                  onDraw={(e) => sendOnChannel("draw", e)}
+                  onDraw={handleDraw}
                   incomingEvents={whiteboardEvents}
-                  onClear={() => {
-                    setWhiteboardEvents([]);
-                    setWhiteboardClearTrigger(t => t + 1);
-                    sendOnChannel("clear-whiteboard", {});
-                  }}
+                  onClear={handleWhiteboardClear}
                   clearTrigger={whiteboardClearTrigger}
                 />
               </div>
@@ -1177,7 +1328,11 @@ function Room({
             )}
             {side === "settings" && (
               <div className="flex-1 overflow-y-auto px-5 py-4">
-                <SettingsPanel rtc={rtc} />
+                <SettingsPanel 
+                  rtc={rtc} 
+                  softFocus={softFocus} 
+                  onToggleSoftFocus={() => setSoftFocus(!softFocus)} 
+                />
               </div>
             )}
           </aside>

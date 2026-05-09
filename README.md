@@ -35,9 +35,17 @@ Velora Meet is packed with powerful features that remain hidden until you need t
 - **Non-Disruptive Engagement:** Communicate without interrupting the active speaker. Utilize built-in emoji reactions, a dedicated "raise hand" feature, and private chat functionality.
 - **Host Controls:** Utilize intuitive moderation tools, one-click waiting rooms, and secure lobby management to orchestrate professional, uninterrupted calls.
 
+### 🏢 Velora Enterprise Hub
+- **Centralized Organization Management:** High-fidelity dashboard for managing multi-team workspaces, billing, and organizational identity.
+- **Team Governance:** Department-wise member grouping, manual onboarding dialogs, and strategic leadership (Admin/Associate) role management.
+- **Visual Identity:** Personalize your workspace with custom organizational logos and cover banners to project a professional brand image.
+- **Telemetry & Analytics:** Real-time monitoring of meeting volume, active seats, and AI utilization metrics synced directly from your workspace.
+
 ### 🔒 Uncompromising Security
 - **Always-On End-to-End Encryption (E2EE):** Your meetings remain strictly private with E2EE enabled by default—no premium subscriptions required to secure your data.
-- **Peer-to-Peer Routing:** Direct routing eliminates unnecessary server hops, minimizing latency and drastically reducing the surface area for potential security breaches.
+- **Organization Security Passcode:** Secondary security layer ensuring only authorized members with the organization key can access sensitive workspace assets.
+- **Domain-Level Provisioning:** Automatically authorize and onboard team members based on verified corporate email domains.
+- **SAML / SSO Ready:** Built-in hooks for enterprise-grade authentication via Okta, Azure AD, or Google Workspace.
 - **Privacy by Design:** We don't collect, sell, or analyze your meeting data for advertising. 
 
 ---
@@ -70,11 +78,12 @@ We built Velora Meet because we were tired of the limitations imposed by legacy 
 | Capability | Velora Meet | Traditional Competitors (e.g., Zoom, Google Meet) |
 | :--- | :--- | :--- |
 | **Free Tier Meeting Limit** | **Unlimited** | Strictly Limited (40 - 60 mins) |
-| **Participant Limits** | **Up to 100** | Up to 100 |
+| **Enterprise Governance** | **Built-in** | Usually behind high-tier paywalls |
 | **Required Installation** | **None (Browser-first)** | App download actively pushed or required |
 | **End-to-End Encryption** | **Default (Always On)** | Often requires premium tiers or manual setup |
 | **Built-in AI Assistant** | **Included Free** | Expensive Paid Add-on |
 | **AI Processing** | **On-Device (Private)** | Server-side (Cloud processing) |
+| **Visual Identity & Branding**| **Custom Logo/Banner** | Limited / Enterprise only |
 | **Low-Bandwidth Mode** | **Auto-Adaptive** | Basic / Manual toggle |
 
 ---

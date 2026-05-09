@@ -1,4 +1,4 @@
-
+import { Link } from "@tanstack/react-router";
 import { useNotifications } from "@/hooks/useNotifications";
 import { 
   Popover, PopoverContent, PopoverTrigger 
@@ -43,8 +43,8 @@ export function NotificationsPopover() {
               <div className="h-10 w-10 rounded-full bg-muted/20 grid place-items-center mx-auto mb-2">
                 <Bell className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium">All caught up!</p>
-              <p className="text-xs text-muted-foreground">No new alerts at the moment.</p>
+              <p className="text-sm font-medium">No recent activity</p>
+              <p className="text-xs text-muted-foreground">New alerts will appear here.</p>
             </div>
           ) : (
             <div className="divide-y divide-glass-border/50">
@@ -60,7 +60,7 @@ export function NotificationsPopover() {
                     'bg-blue-500/10 text-blue-500'
                   }`}>
                     {n.kind === 'meeting' ? <Video className="h-4 w-4" /> :
-                     n.kind === 'success' ? <Zap className="h-4 w-4" /> :
+                     n.kind === 'success' ? <Bell className="h-4 w-4" /> :
                      <Info className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 flex-1 space-y-0.5">
@@ -75,6 +75,11 @@ export function NotificationsPopover() {
               ))}
             </div>
           )}
+        </div>
+        <div className="p-3 border-t border-glass-border bg-card/20">
+          <Button asChild variant="outline" className="w-full h-9 rounded-xl text-[11px] font-bold border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
+            <Link to="/dashboard/notifications">View all activity</Link>
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

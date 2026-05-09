@@ -72,7 +72,7 @@ function AuthPage() {
           password: parsed.data.password,
           options: {
             data: { display_name: parsed.data.displayName },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `https://velora-systems-meet.vercel.app/dashboard`,
           },
         });
         if (error) {
@@ -159,7 +159,7 @@ function AuthPage() {
       setBusy(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `${window.location.origin}/dashboard` },
+        options: { redirectTo: `https://velora-systems-meet.vercel.app/dashboard` },
       });
       if (error) throw error;
     } catch (e) {

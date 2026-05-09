@@ -16,12 +16,16 @@ const buttonVariants = cva(
         secondary: "bg-green-500/10 text-green-600 shadow-sm hover:bg-green-500/20 border border-green-500/20",
         ghost: "hover:bg-primary/10 hover:text-primary",
         link: "text-primary underline-offset-4 hover:underline font-bold",
+        "velora-save": "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95",
+        "velora-cancel": "bg-red-500 text-white shadow-lg shadow-red-500/20 hover:bg-red-600 active:scale-95",
       },
       size: {
         default: "h-9 px-5 py-2 text-[13px]",
         sm: "h-8 rounded-lg px-3 text-[11px]",
         lg: "h-11 rounded-xl px-8 text-sm",
         icon: "h-9 w-9",
+        thin: "h-9 px-6 text-[11px] font-bold rounded-xl",
+        micro: "h-7 px-3 text-[10px] font-bold rounded-full",
       },
     },
     defaultVariants: {
