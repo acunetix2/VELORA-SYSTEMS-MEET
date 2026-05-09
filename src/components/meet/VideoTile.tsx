@@ -84,12 +84,25 @@ export function VideoTile({
   }, [stream, audioOn]);
 
   let ringClass = "";
-  if (spotlight) ringClass = "ring-2 ring-primary/60 shadow-glow";
-  else if (handRaised) ringClass = "ring-2 ring-warning/70 shadow-glow shadow-warning/20";
-  else if (isSpeaking) ringClass = "ring-[3px] ring-brand-green animate-speaking transition-all duration-150 scale-[1.02] z-10";
+  if (spotlight) ringClass = "ring-2 ring-primary/60 shadow-glow z-10";
+  else if (handRaised) ringClass = "ring-2 ring-warning/70 shadow-glow shadow-warning/20 z-10";
+  else if (isSpeaking) ringClass = "ring-[3px] animate-speaking scale-[1.01] z-20";
+
+  // Extract a solid color from the gradient for the glow effect
+  const bg = colorForName(name, color);
+  let glowColor = "#22c55e"; // default green
+  if (bg.includes("oklch")) {
+    const match = bg.match(/oklch\([^)]+\)/);
+    if (match) glowColor = match[0];
+  } else if (color && !color.includes("gradient")) {
+    glowColor = color;
+  }
 
   return (
-    <div className={`relative rounded-xl sm:rounded-2xl overflow-hidden glass transition-smooth min-h-[120px] h-full w-full ${ringClass}`}>
+    <div 
+      className={`relative rounded-xl sm:rounded-2xl overflow-hidden glass transition-all duration-300 min-h-[120px] h-full w-full ${ringClass}`}
+      style={isSpeaking ? { "--speaking-color": glowColor } as any : {}}
+    >
       {stream && (
         <video
           ref={ref}

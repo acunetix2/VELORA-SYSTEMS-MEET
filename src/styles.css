@@ -284,11 +284,11 @@
   .lining-purple { --lining-color: #8b5cf6; }
 
   @keyframes speaking-glow {
-    0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4), 0 0 20px rgba(34, 197, 94, 0.2); }
-    50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.4); }
+    0%, 100% { box-shadow: 0 0 0 2px var(--speaking-color, rgba(34, 197, 94, 0.4)), 0 0 15px var(--speaking-color, rgba(34, 197, 94, 0.1)); }
+    50% { box-shadow: 0 0 0 4px var(--speaking-color, rgba(34, 197, 94, 0.7)), 0 0 25px var(--speaking-color, rgba(34, 197, 94, 0.3)); }
   }
 
   .animate-speaking {
-    animation: speaking-glow 1.5s ease-in-out infinite;
+    animation: speaking-glow 1.2s ease-in-out infinite;
   }
 }
