@@ -30,7 +30,7 @@ import {
   Users, Wifi, WifiOff, Activity, Loader2, ShieldAlert, MicOff as MicOffIcon, Minimize2, Maximize2,
   Smile, Hand, MessageCircleQuestion, FileText, Circle, StopCircle, Presentation, BarChart3, Settings as SettingsIcon,
   Timer, BarChart2, CheckCircle2, ShieldCheck, LayoutGrid, Plus, MoreVertical, GraduationCap, Building2, ChevronRight,
-  Info, Video
+  Info, Video, Crown
 } from "lucide-react";
 import { toast } from "sonner";
 import {
