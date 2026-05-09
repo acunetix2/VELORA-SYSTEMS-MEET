@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import {
   Mic, Video as VideoIcon, Bell, Eye, ChevronRight, Globe, Volume2, Monitor, Shield, Zap,
   Smartphone, Keyboard, CheckCircle2, RefreshCw, Copy, QrCode,
-  Trash2, Database, AlertTriangle
+  Trash2, Database, AlertTriangle, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -79,6 +79,8 @@ const REGIONS = [
 
 function Page() {
   const { profile } = useProfile();
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
+  const [pairCode, setPairCode] = useState<string | null>(null);
   const [pairLoading, setPairLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");

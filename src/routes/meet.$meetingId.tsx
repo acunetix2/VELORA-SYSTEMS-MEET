@@ -351,19 +351,21 @@ function MeetingRoomInner({ onLeave }: { onLeave: (status: "ended" | "left") => 
       isCreator={isCreator as boolean}
       initialPrivacy={initialPrivacy}
       expiresAt={local?.expiresAt ?? null}
+      session={session}
       onLeave={onLeave}
     />
   );
 }
 
 function Room({
-  meetingId, identity, isCreator, initialPrivacy, expiresAt, onLeave,
+  meetingId, identity, isCreator, initialPrivacy, expiresAt, session, onLeave,
 }: {
   meetingId: string;
   identity: { userId: string | null; name: string; avatarUrl: string | null; color: string | null };
   isCreator: boolean;
   initialPrivacy: MeetingPrivacy;
   expiresAt: number | null;
+  session: any;
   onLeave: (status: "ended" | "left") => void;
 }) {
   const isMobile = useIsMobile();
