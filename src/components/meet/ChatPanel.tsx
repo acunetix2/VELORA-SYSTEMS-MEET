@@ -108,7 +108,7 @@ export function ChatPanel({ messages, onSend, onSendFile, dataChannels = [] }: P
     setTimeout(() => {
       setUploads(p => { const n = { ...p }; delete n[id]; return n; });
     }, 3000);
-  }, [dataChannel, onSendFile]);
+  }, [dataChannels, onSendFile]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

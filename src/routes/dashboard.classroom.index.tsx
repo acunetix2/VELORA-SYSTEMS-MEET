@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { 
   Plus, Search, ChevronRight, MoreVertical,
   GraduationCap, Trash2, Settings, Users2, UserPlus,
-  Loader2, Users, ArrowRight, Copy
+  Loader2, Users, ArrowRight, Copy, Image as ImageIcon
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
@@ -48,6 +48,9 @@ function Page() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [bannerImage, setBannerImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isJoiningLoading, setIsJoiningLoading] = useState(false);
+  // Cache user to avoid concurrent getUser() calls that steal the Supabase auth lock
+  const cachedUserRef = React.useRef<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -58,12 +61,28 @@ function Page() {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      cachedUserRef.current = user; // cache for later use
 
       const { data: owned } = await supabase.from("classrooms").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-      const { data: joined } = await supabase.from("classroom_members").select("classroom_id, classrooms(*)").eq("email", user.email);
+      // Query by both user_id and email for maximum compatibility
+      const [byUserId, byEmail] = await Promise.all([
+        supabase.from("classroom_members").select("classroom_id, classrooms(*)").eq("user_id", user.id),
+        supabase.from("classroom_members").select("classroom_id, classrooms(*)").eq("email", user.email ?? "")
+      ]);
+      const joinedRaw = [
+        ...(byUserId.data || []),
+        ...(byEmail.data || [])
+      ];
+      // Deduplicate by classroom_id
+      const seen = new Set<string>();
+      const uniqueJoined = joinedRaw.filter((j: any) => {
+        if (seen.has(j.classroom_id)) return false;
+        seen.add(j.classroom_id);
+        return true;
+      });
 
       setClasses(owned || []);
-      setJoinedClasses(joined?.map((j: any) => j.classrooms).filter(Boolean) || []);
+      setJoinedClasses(uniqueJoined.map((j: any) => j.classrooms).filter(Boolean));
     } catch (err) {
       console.error(err);
     } finally {
@@ -91,8 +110,10 @@ function Page() {
 
   const createClass = async () => {
     if (!newName.trim()) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use cached user to avoid auth lock contention
+    const user = cachedUserRef.current || (await supabase.auth.getUser()).data.user;
     if (!user) return;
+    cachedUserRef.current = user;
 
     const slugify = (text: string) => text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
     const slug = `${slugify(newName)}-${Math.random().toString(36).substring(2, 6)}`;
@@ -120,30 +141,52 @@ function Page() {
   const joinClass = async () => {
     const code = joinCode.trim().toUpperCase();
     if (!code) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    setIsJoiningLoading(true);
+    try {
+      // Use cached user to avoid competing auth lock calls
+      const user = cachedUserRef.current || (await supabase.auth.getUser()).data.user;
+      if (!user) { toast.error("Not authenticated"); return; }
+      cachedUserRef.current = user;
 
-    // Check by both UUID and 6-char join_code
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
-    
-    let query = supabase.from("classrooms").select("*");
-    if (isUuid) query = query.eq("id", code);
-    else query = query.eq("join_code", code);
-    
-    const { data: cls } = await query.maybeSingle();
-    
-    if (!cls) { toast.error("Invalid class code"); return; }
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
+      
+      let query = supabase.from("classrooms").select("*");
+      if (isUuid) query = query.eq("id", code);
+      else query = query.eq("join_code", code);
+      
+      const { data: cls, error: lookupError } = await query.maybeSingle();
+      
+      if (lookupError) {
+        console.error("Classroom lookup error:", lookupError);
+        toast.error("Unable to look up class. Please try again.");
+        return;
+      }
+      if (!cls) { toast.error("Invalid class code. Check the code and try again."); return; }
 
-    const { error } = await supabase.from("classroom_members").insert({
-      classroom_id: cls.id, user_id: user.id, email: user.email, role: "student"
-    });
+      // Insert member record with both user_id and email for RLS compatibility
+      const { error } = await supabase.from("classroom_members").insert({
+        classroom_id: cls.id, 
+        user_id: user.id, 
+        email: user.email ?? "", 
+        role: "student"
+      });
 
-    if (error) toast.error("Already a member or failed to join");
-    else {
-      await push({ title: "Joined Classroom", body: `You are now a member of "${cls.name}"`, kind: "success" });
-      toast.success(`Joined ${cls.name}`);
-      setIsJoining(false);
-      fetchData();
+      if (error) {
+        if (error.code === '23505') toast.error("You are already a member of this class.");
+        else { console.error("Join error:", error); toast.error("Failed to join. Please try again."); }
+      } else {
+        await push({ title: "Joined Classroom", body: `You are now a member of "${cls.name}"`, kind: "success" });
+        toast.success(`Joined ${cls.name}!`);
+        setIsJoining(false);
+        setJoinCode("");
+        fetchData();
+        navigate({ to: "/dashboard/classroom/$slug/class", params: { slug: cls.slug || cls.id } });
+      }
+    } catch (err) {
+      console.error("joinClass error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsJoiningLoading(false);
     }
   };
 
@@ -411,7 +454,7 @@ function Page() {
               <div className="flex gap-2">
                 <input id="banner-upload" type="file" onChange={handleImageUpload} className="hidden" accept="image/*" />
                 <Button variant="outline" onClick={() => document.getElementById('banner-upload')?.click()} className="bg-card/40 h-12 rounded-xl flex-1 border-glass-border hover:bg-card/60 text-xs font-bold transition-all">
-                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Image className="h-4 w-4 mr-2" />}
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />}
                   {isUploading ? "Uploading..." : "Choose image"}
                 </Button>
                 {bannerImage && <div className="h-12 w-12 shrink-0 rounded-xl border border-primary/20 overflow-hidden"><img src={bannerImage} className="h-full w-full object-cover" /></div>}
@@ -427,31 +470,37 @@ function Page() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isJoining} onOpenChange={setIsJoining}>
-        <DialogContent className="glass border-glass-border rounded-[2rem] p-6 max-w-xs shadow-2xl text-center">
-          <div className="h-12 w-12 bg-primary/10 text-primary rounded-xl grid place-items-center mx-auto mb-3">
-            <UserPlus className="h-6 w-6" />
-          </div>
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-center">Join classroom</DialogTitle>
-            <DialogDescription className="text-center text-[11px] font-medium leading-relaxed">
-              Enter the unique 6-character <br /> class code to get started.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
+      <Dialog open={isJoining} onOpenChange={(v) => { setIsJoining(v); if (!v) setJoinCode(""); }}>
+        <DialogContent className="border-0 rounded-2xl p-0 max-w-[320px] shadow-2xl overflow-hidden bg-gradient-to-b from-blue-600 to-blue-700 text-white">
+          <div className="p-5 text-center">
+            <div className="h-10 w-10 bg-white/20 rounded-xl grid place-items-center mx-auto mb-3">
+              <UserPlus className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-base font-black tracking-tight">Join a Classroom</h2>
+            <p className="text-[11px] text-blue-100 mt-1 mb-4 leading-relaxed">
+              Enter the 6-character class code<br/>from your instructor.
+            </p>
             <Input 
               value={joinCode} 
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())} 
               placeholder="A7B2X9" 
               maxLength={6}
-              className="bg-card/40 h-11 rounded-xl text-center text-xl font-mono tracking-widest focus:ring-primary/20 border-primary/10 uppercase font-bold" 
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/50 h-10 rounded-xl text-center text-lg font-mono tracking-[0.3em] uppercase font-black focus-visible:ring-white/40" 
             />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={() => setIsJoining(false)} className="flex-1 rounded-xl h-10 text-[11px] font-bold">Cancel</Button>
-            <Button onClick={joinClass} disabled={!joinCode} className="flex-1 bg-primary text-white rounded-xl h-10 shadow-glow font-bold text-[11px]">
-              Join
-            </Button>
+            <div className="flex gap-2 mt-3">
+              <Button 
+                variant="ghost" 
+                onClick={() => { setIsJoining(false); setJoinCode(""); }} 
+                className="flex-1 rounded-xl h-9 text-[11px] font-bold text-white/80 hover:text-white hover:bg-white/10"
+              >Cancel</Button>
+              <Button 
+                onClick={joinClass} 
+                disabled={joinCode.length < 3 || isJoiningLoading} 
+                className="flex-1 bg-white hover:bg-blue-50 text-blue-700 rounded-xl h-9 font-black text-[11px] shadow-lg"
+              >
+                {isJoiningLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Join Class"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

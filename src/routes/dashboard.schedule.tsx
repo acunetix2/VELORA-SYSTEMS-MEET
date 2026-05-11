@@ -23,7 +23,7 @@ import {
   Dialog, DialogContent, DialogTrigger 
 } from "@/components/ui/dialog";
 import { format, setHours, setMinutes, parseISO, addMinutes, isAfter, isBefore, subMinutes } from "date-fns";
-import { Bell, CheckCircle, AlertTriangle } from "lucide-react";
+import { Bell, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 
 function ScheduleComponent() {
   return (

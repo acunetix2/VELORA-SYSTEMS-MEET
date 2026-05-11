@@ -10,7 +10,7 @@ import {
   BarChart2, CreditCard, ChevronRight, Sparkles, Loader2,
   Plus, Rocket, Crown, Package, CheckCircle2, AlertCircle,
   Terminal, Zap, Shield, Heart, Fingerprint, Image as ImageIcon,
-  Upload, Camera, Check, Search
+  Upload, Camera, Check, Search, X
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { Loader } from "@/components/Loader";
 
@@ -43,8 +45,6 @@ export const Route = createFileRoute("/dashboard/enterprise")({
 type Org = { id: string; name: string; settings: any; admin_passcode_hash?: string };
 type Member = { id: string; role: string; user: { email: string; display_name: string } };
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 function Page() {
   const { user } = useAuth();
@@ -149,7 +149,7 @@ function Page() {
     fetchMembersForActiveOrg();
     fetchOrgStats();
     fetchOrgProducts();
-  }, [activeOrgId, members.length]);
+  }, [activeOrgId]); // members.length removed to prevent infinite loop
 
   useEffect(() => {
     setIsUnlocked(false);

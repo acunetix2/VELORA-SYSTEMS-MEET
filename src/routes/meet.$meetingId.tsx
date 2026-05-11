@@ -513,9 +513,11 @@ function Room({
   useEffect(() => { sideRef.current = side; }, [side]);
 
   // Chat + agenda + breakout over realtime channel
+  // NOTE: We use rtc.status as the trigger because React cannot track
+  // mutations to rtc.channel.current (it's a ref, not state).
   useEffect(() => {
     const ch = rtc.channel.current;
-    if (!ch) return;
+    if (!ch || rtc.status !== "joined") return;
     const chatHandler = ({ payload }: { payload: { from: string; text?: string; fileUrl?: string; fileName?: string; id: string; ts: number } }) => {
       setChat((prev) => {
         // Deduplicate by id to prevent tripling from re-subscriptions
@@ -535,12 +537,11 @@ function Room({
     ch.on("broadcast", { event: "chat" }, chatHandler);
     ch.on("broadcast", { event: "agenda-update" }, agendaHandler);
     ch.on("broadcast", { event: "breakout-config" }, breakoutHandler);
-  // Also clean up chat/agenda/breakout channel listeners safely
     return () => {
       // Handled by channel teardown in useWebRTC
     };
-    // Only re-run when the channel changes, NOT when `side` changes
-  }, [rtc.channel.current]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rtc.status]);
 
   useEffect(() => { if (side === "chat") setUnreadChat(0); }, [side]);
   useEffect(() => { if (side === "qna") setUnreadQna(0); }, [side]);
@@ -779,7 +780,7 @@ function Room({
   // per channel connection — preventing duplicate listener accumulation.
   useEffect(() => {
     const ch = rtc.channel.current;
-    if (!ch) return;
+    if (!ch || rtc.status !== "joined") return;
 
     ch.on("broadcast", { event: "reaction" }, ({ payload }: { payload: Reaction }) => {
       setReactions((prev) => [...prev.slice(-30), payload]);
@@ -889,11 +890,9 @@ function Room({
     return () => {
       // Supabase channel listeners are cleaned up when the channel itself is removed
       // by useWebRTC on unmount — no need to call ch.off() here.
-      // This prevents the "ch.off is not a function" error.
     };
-    // Intentionally NOT including `side` — we read it via sideRef to avoid
-    // re-registering listeners on every panel switch (that's what caused tripling).
-  }, [rtc.channel.current]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rtc.status]);
 
   // ---- Join / leave toasts ----
   useEffect(() => {

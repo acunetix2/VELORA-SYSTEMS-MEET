@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/Avatar";
 import { Input } from "@/components/ui/input";
@@ -12,10 +13,11 @@ import {
   Settings, ArrowLeft, Plus, Mail, Shield, 
   FileText, CheckCircle2, ChevronRight,
   MoreVertical, Search, Copy, UserPlus, Loader2,
-  Upload, Download, Trash2, File as FileIcon, Image, PlayCircle,
+  Trash2, File as FileIcon, Image as ImageIcon, PlayCircle,
   BarChart2, Sparkles, BrainCircuit, Zap, MessageSquare, Info, ArrowRight,
   RefreshCcw, Globe, BookOpen, ClipboardList, PenTool, Layout, Eye,
-  Trophy, AlertCircle, CalendarDays, Filter, CalendarSearch, Paperclip, X
+  Trophy, AlertCircle, CalendarDays, Filter, CalendarSearch, Paperclip, X,
+  Upload, Download
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
@@ -391,11 +393,11 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
             <Label className="text-[11px] uppercase tracking-widest font-black ml-1 text-foreground/90">Banner image</Label>
             <div className="flex gap-4">
               <div className="h-16 w-24 rounded-xl border border-glass-border overflow-hidden bg-muted/20 shrink-0">
-                {editBanner ? <img src={editBanner} className="h-full w-full object-cover" /> : <div className="h-full w-full grid place-items-center text-muted-foreground"><Image className="h-6 w-6" /></div>}
+                {editBanner ? <img src={editBanner} className="h-full w-full object-cover" /> : <div className="h-full w-full grid place-items-center text-muted-foreground"><ImageIcon className="h-6 w-6" /></div>}
               </div>
               <input id="edit-banner-upload" type="file" onChange={handleBannerUpload} className="hidden" accept="image/*" />
               <Button variant="outline" onClick={() => document.getElementById('edit-banner-upload')?.click()} className="flex-1 bg-card/40 h-16 rounded-xl border-glass-border hover:bg-card/60 text-xs font-bold transition-all">
-                {isUpdatingClass ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Image className="h-5 w-5 mr-2" />}
+                {isUpdatingClass ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ImageIcon className="h-5 w-5 mr-2" />}
                 {isUpdatingClass ? "Uploading..." : "Choose image"}
               </Button>
             </div>
@@ -468,9 +470,19 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const { data } = await supabase.from("classroom_members" as any).select("*, user:profiles(*)").eq("classroom_id", classId);
+      // Join with profiles table to get names and photos
+      const { data, error } = await supabase
+        .from("classroom_members" as any)
+        .select("*, user:profiles(*)")
+        .eq("classroom_id", classId);
+      
+      if (error) throw error;
       if (data) setMembers(data);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+    } catch (err) { 
+      console.error("Fetch members error:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
   const inviteStudent = async () => {
     if (!inviteEmail.trim()) return;
@@ -503,8 +515,20 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
         {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-9 px-4 text-[12px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add people</Button>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {loading ? <div className="col-span-full py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : filtered.map(m => (
-          <div key={m.id} className="flex items-center gap-4 p-4 rounded-2xl border border-glass-border bg-card/40 hover:border-primary/30 transition-all group"><Avatar name={m.user?.display_name || m.email} size="md" className="group-hover:scale-105 transition-transform" /><div className="flex-1 min-w-0"><p className="text-[14px] font-bold truncate">{m.user?.display_name || m.email.split("@")[0]}</p><p className="text-[11px] text-muted-foreground font-bold tracking-tight">Student</p></div>{isHost && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}</div>
+        {loading ? <div className="col-span-full py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : filtered.length === 0 ? (
+          <div className="col-span-full py-16 text-center bg-muted/5 rounded-[2rem] border border-dashed border-glass-border">
+            <Users className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-medium">No students enrolled yet.</p>
+          </div>
+        ) : filtered.map(m => (
+          <div key={m.id} className="flex items-center gap-4 p-4 rounded-2xl border border-glass-border bg-card/40 hover:border-primary/30 transition-all group">
+            <Avatar name={m.user?.display_name || m.email} src={m.user?.avatar_url} size="md" className="group-hover:scale-105 transition-transform" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-bold truncate">{m.user?.display_name || m.email?.split("@")[0] || "Student"}</p>
+              <p className="text-[11px] text-muted-foreground font-bold tracking-tight">{m.role === "host" ? "Instructor" : "Student"}</p>
+            </div>
+            {isHost && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+          </div>
         ))}
       </div>
       <Dialog open={isInviting} onOpenChange={setIsInviting}>
@@ -950,11 +974,13 @@ function GradingHub({ classId, assignments, onUpdate }: { classId: string; assig
 
   const fetchSubmissions = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("classroom_submissions" as any)
       .select("*, student:profiles(*)")
       .eq("assignment_id", selectedAssignment.id)
       .order("submitted_at", { ascending: false });
+    
+    if (error) console.error("GradingHub fetch error:", error);
     setSubmissions(data || []);
     setLoading(false);
   };
