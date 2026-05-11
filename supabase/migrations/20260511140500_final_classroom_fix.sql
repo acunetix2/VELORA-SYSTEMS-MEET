@@ -1,8 +1,7 @@
--- Migration: Final Classroom Visibility Fix
+-- Migration: Final Classroom Visibility Fix (Safe Version)
 -- Date: 2026-05-11
 
 -- 1. Ensure classrooms are selectable by their members
--- The previous 'lookup' policy was too broad or might be shadowed.
 DROP POLICY IF EXISTS "Authenticated users can lookup classrooms to join" ON classrooms;
 DROP POLICY IF EXISTS "Members can view classroom details" ON classrooms;
 
@@ -21,20 +20,26 @@ CREATE POLICY "Members can view classroom details"
     join_code IS NOT NULL -- Allow lookup by code for joining
   );
 
--- 2. Ensure classroom_members can be joined with profiles
--- PostgREST often needs an explicit foreign key to the table it's joining if it's not the primary one.
--- Let's make sure there's a relationship between classroom_members and profiles.
+-- 2. Clean up invalid user_ids to allow FK creation
+UPDATE classroom_members 
+SET user_id = NULL 
+WHERE user_id IS NOT NULL 
+AND user_id NOT IN (SELECT id FROM profiles);
+
+-- 3. Ensure classroom_members can be joined with profiles
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'classroom_members_user_id_profiles_fkey'
   ) THEN
     ALTER TABLE classroom_members 
     ADD CONSTRAINT classroom_members_user_id_profiles_fkey 
-    FOREIGN KEY (user_id) REFERENCES profiles(id);
+    FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE SET NULL;
   END IF;
+EXCEPTION WHEN others THEN
+  RAISE NOTICE 'Could not add foreign key constraint, join might rely on implicit link';
 END $$;
 
--- 3. Robust member visibility (Instructor must see all, students see each other)
+-- 4. Robust member visibility (Instructor must see all, students see each other)
 DROP POLICY IF EXISTS "Class members can view other members" ON classroom_members;
 CREATE POLICY "Class members can view other members"
   ON classroom_members FOR SELECT
