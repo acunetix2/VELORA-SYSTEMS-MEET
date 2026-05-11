@@ -197,7 +197,7 @@ function Page() {
                     </div>
                     <div>
                       <p className="text-sm font-bold">Leading Hybrid Teams</p>
-                      <p className="text-xs text-muted-foreground italic">With CEO Iddy Chesire</p>
+                      <p className="text-xs text-muted-foreground italic">With Velora Experts</p>
                     </div>
                   </div>
                 </div>

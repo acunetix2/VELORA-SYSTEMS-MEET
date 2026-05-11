@@ -262,7 +262,7 @@ function DashboardInner() {
               <h3 className="font-bold text-lg text-primary">Velora Academy</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              Master advanced features and hybrid meeting strategies with Iddy Chesire.
+              Master advanced features and hybrid meeting strategies with the Velora team.
             </p>
             <Button asChild variant="outline" className="mt-auto border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl font-bold">
               <Link to="/dashboard/classroom">Open classrooms <ArrowRight className="h-4 w-4 ml-2" /></Link>
@@ -620,8 +620,8 @@ function DashboardFooter() {
       </p>
       <div className="flex items-center justify-center">
         <div className="flex flex-col items-center text-center">
-          <span className="text-sm font-black text-foreground">Iddy Chesire</span>
-          <span className="text-[11px] text-primary font-bold">CEO & Co-founder</span>
+          <span className="text-sm font-black text-foreground">Velora HQ</span>
+          <span className="text-[11px] text-primary font-bold">Protocol Operations</span>
         </div>
       </div>
     </footer>
