@@ -1080,20 +1080,62 @@ function GradingHub({ classId, assignments, onUpdate }: { classId: string; assig
           </div>
         ) : (
           submissions.map(sub => (
-            <div key={sub.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-glass-border bg-card/40 hover:bg-card/60 transition-all">
-              <div className="flex items-center gap-4">
-                <Avatar name={sub.student?.display_name || "Student"} size="sm" />
-                <div>
-                  <p className="font-bold text-[14px] text-foreground">{sub.student?.display_name || "Velora learner"}</p>
-                  <p className="text-[10px] text-muted-foreground font-bold">Received: {new Date(sub.submitted_at).toLocaleString()}</p>
+            <div key={sub.id} className="flex flex-col gap-4 p-5 rounded-[2rem] border border-glass-border bg-card/40 hover:bg-card/60 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Avatar name={sub.student?.display_name || "Student"} size="sm" />
+                  <div>
+                    <p className="font-bold text-[14px] text-foreground">{sub.student?.display_name || "Velora learner"}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">Received: {new Date(sub.submitted_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-xl">
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary text-foreground" title="Download">
+                      <a href={sub.file_url} target="_blank"><Download className="h-4 w-4" /></a>
+                    </Button>
+                    {(sub.file_name?.toLowerCase().endsWith('.pdf') || sub.file_url?.toLowerCase().includes('.pdf')) && (
+                      <Button 
+                        onClick={() => setActiveSubmission({...sub, type: 'preview'})} 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-lg hover:bg-blue-500/10 hover:text-blue-500 text-foreground"
+                        title="Quick View"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Button onClick={() => { setActiveSubmission(sub); setGrade(sub.grade || ""); setFeedback(sub.feedback || ""); setIsGrading(true); }} className={`h-9 rounded-xl px-4 font-bold text-[11px] transition-all ${sub.status === 'graded' ? 'bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20' : 'bg-primary text-white shadow-glow'}`}>
+                    {sub.status === 'graded' ? `Score: ${sub.grade}` : 'Assign grade'}
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary text-foreground"><a href={sub.file_url} target="_blank"><Download className="h-5 w-5" /></a></Button>
-                <Button onClick={() => { setActiveSubmission(sub); setGrade(sub.grade || ""); setFeedback(sub.feedback || ""); setIsGrading(true); }} className={`h-10 rounded-xl px-5 font-bold text-[11px] transition-all ${sub.status === 'graded' ? 'bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20' : 'bg-primary text-white shadow-glow'}`}>
-                  {sub.status === 'graded' ? `Score: ${sub.grade}` : 'Assign grade'}
-                </Button>
-              </div>
+
+              {activeSubmission?.id === sub.id && activeSubmission.type === 'preview' && (
+                <div className="w-full mt-2 rounded-[1.5rem] overflow-hidden border border-glass-border animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="bg-muted/30 p-2 flex items-center justify-between border-b border-glass-border">
+                    <span className="text-[10px] font-bold text-muted-foreground px-2 uppercase tracking-widest flex items-center gap-2">
+                      <FileText className="h-3 w-3" /> Document Preview
+                    </span>
+                    <Button onClick={() => setActiveSubmission(null)} variant="ghost" size="micro" className="h-6 w-6 rounded-md hover:bg-destructive/10 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-white relative">
+                    <iframe 
+                      src={`${sub.file_url}#toolbar=0`} 
+                      className="w-full h-full border-none"
+                      title="Submission Preview"
+                    />
+                    <div className="absolute bottom-4 right-4">
+                       <Button asChild variant="secondary" size="sm" className="rounded-xl font-bold text-[10px] h-8 shadow-2xl">
+                         <a href={sub.file_url} target="_blank">Open Full <ArrowRight className="ml-1 h-3 w-3" /></a>
+                       </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
