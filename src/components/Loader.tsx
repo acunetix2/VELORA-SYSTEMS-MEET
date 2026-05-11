@@ -23,9 +23,9 @@ export function Loader({ label = "Loading...", className = "", size = "md", vari
     : "w-full py-16";
 
   return (
-    <div className={`${containerClasses} flex flex-col items-center justify-center space-y-8 ${className}`}>
-      {/* Patient Monitor Console */}
-      <div className="relative h-24 w-48 rounded-[1.5rem] bg-black border border-white/10 overflow-hidden shadow-2xl ring-1 ring-white/5">
+    <div className={`${containerClasses} flex flex-col items-center justify-center space-y-6 ${className}`}>
+      {/* Patient Monitor Console (Slimmer Profile) */}
+      <div className="relative h-16 w-36 rounded-[1.2rem] bg-black border border-white/10 overflow-hidden shadow-2xl ring-1 ring-white/5">
         {/* Electronic Grid Background */}
         <div 
           className="absolute inset-0 opacity-[0.15]" 
