@@ -419,9 +419,18 @@ function Page() {
                     </p>
                     
                     <div className="mt-auto flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md">
-                        <Users className="h-3 w-3" /> 
-                        <span>Active hub</span>
+                      <div className="flex items-center gap-2">
+                        {c.last_live_at && new Date(c.last_live_at).getTime() > Date.now() - (1000 * 60 * 60 * 2) ? (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-md text-[9px] font-black uppercase tracking-widest animate-pulse border border-emerald-500/20">
+                            <div className="h-1 w-1 rounded-full bg-emerald-600 animate-ping" />
+                            Live Now
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-md">
+                            <Users className="h-3 w-3" /> 
+                            <span>Active hub</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 text-primary font-bold text-[11px] group-hover:gap-2 transition-all">
                         Manage <ChevronRight className="h-3.5 w-3.5" />

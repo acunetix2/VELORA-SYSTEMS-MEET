@@ -1,5 +1,5 @@
 import React from "react";
-import { Logo } from "./Logo";
+import { BrainCircuit } from "lucide-react";
 
 interface LoaderProps {
   label?: string;
@@ -37,11 +37,11 @@ export function Loader({ label = "Loading", className = "", size = "md", variant
         <div className="absolute inset-0 rounded-[2.5rem] bg-brand-green/20 animate-ping duration-1000" />
         <div className="absolute inset-[-10px] rounded-[2.8rem] bg-primary/10 animate-pulse duration-1500 delay-300" />
         
-        {/* Core Logo Container */}
+        {/* Core AI Icon Container */}
         <div className="relative h-full w-full rounded-[2.2rem] bg-gradient-brand shadow-glow flex items-center justify-center overflow-hidden border border-white/20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent)]" />
           <div className="animate-float flex items-center justify-center">
-             <Logo showText={false} className="scale-[1.5] brightness-200 contrast-125" />
+             <BrainCircuit className="h-8 w-8 text-white brightness-125" />
           </div>
           
           {/* Shimmer Effect */}
@@ -51,7 +51,7 @@ export function Loader({ label = "Loading", className = "", size = "md", variant
 
       {label && (
         <div className="flex flex-col items-center gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
-          <p className="text-base font-black tracking-tight text-foreground/90">{label}</p>
+          <p className="text-[14px] font-medium tracking-tight text-foreground/70 uppercase tracking-widest">{label}</p>
           <div className="flex gap-1">
             <span className="h-1 w-1 rounded-full bg-brand-green animate-bounce" />
             <span className="h-1 w-1 rounded-full bg-brand-green animate-bounce delay-150" />

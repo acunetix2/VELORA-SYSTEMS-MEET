@@ -285,6 +285,12 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
                       <span className="px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold border border-white/20">
                         {isHost ? "Teaching" : "Enrolled"}
                       </span>
+                      {cls?.last_live_at && new Date(cls.last_live_at).getTime() > Date.now() - (1000 * 60 * 60 * 2) && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 animate-pulse">
+                          <div className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                          Live Now
+                        </div>
+                      )}
                       {isHost && (
                         <Button onClick={copyId} variant="ghost" className="h-7 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold border border-white/10">
                           <Copy className="h-3 w-3 mr-2" /> 
