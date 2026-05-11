@@ -222,9 +222,17 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
   const startInstantMeeting = async () => {
     if (!cls) return;
     const mid = cls.meeting_id || generateMeetingId();
-    if (isHost && !cls.meeting_id) {
-      await supabase.from("classrooms").update({ meeting_id: mid }).eq("id", cls.id);
+    
+    // If instructor starts, notify students by updating last_live_at
+    if (isHost) {
+      await supabase.from("classrooms").update({ 
+        meeting_id: mid,
+        last_live_at: new Date().toISOString()
+      }).eq("id", cls.id);
+      
+      toast.success("Students notified of live session.");
     }
+    
     window.open(`/meet/${mid}`, "_blank");
   };
 
