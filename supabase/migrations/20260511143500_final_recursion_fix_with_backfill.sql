@@ -53,15 +53,14 @@ CREATE POLICY "Member manage" ON public.classroom_members FOR ALL TO authenticat
   USING (check_is_owner(classroom_id));
 
 -- 4. Backfill existing classroom owners into the membership table
+-- We join with auth.users to get the email as it's required in classroom_members
 DO $$
-DECLARE
-    r RECORD;
 BEGIN
-    FOR r IN SELECT id, user_id FROM public.classrooms LOOP
-        INSERT INTO public.classroom_members (classroom_id, user_id, email, role)
-        SELECT r.id, r.user_id, p.email, 'host'
-        FROM public.profiles p
-        WHERE p.id = r.user_id
-        ON CONFLICT (classroom_id, email) DO NOTHING;
-    END LOOP;
+    INSERT INTO public.classroom_members (classroom_id, user_id, email, role)
+    SELECT r.id, r.user_id, u.email, 'host'
+    FROM public.classrooms r
+    JOIN auth.users u ON u.id = r.user_id
+    ON CONFLICT (classroom_id, email) DO NOTHING;
+EXCEPTION WHEN others THEN
+    RAISE NOTICE 'Backfill failed, likely due to schema permissions. Manual backfill may be required.';
 END $$;
