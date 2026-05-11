@@ -999,11 +999,50 @@ function GradingHub({ classId, assignments, onUpdate }: { classId: string; assig
   const [activeSubmission, setActiveSubmission] = useState<any>(null);
   const [grade, setGrade] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [members, setMembers] = useState<any[]>([]);
 
   useEffect(() => {
-    if (selectedAssignment) fetchSubmissions();
-    else setSubmissions([]);
+    if (selectedAssignment) {
+      fetchSubmissions();
+      fetchRoster();
+    }
+    else {
+      setSubmissions([]);
+      setMembers([]);
+    }
   }, [selectedAssignment]);
+
+  const fetchRoster = async () => {
+    const { data } = await supabase.from("classroom_members").select("*, user:profiles(*)").eq("classroom_id", classId);
+    setMembers(data || []);
+  };
+
+  const downloadGradebook = () => {
+    if (!selectedAssignment || members.length === 0) return;
+    
+    // Create CSV header
+    let csv = "Student Name,Email,Status,Grade,Submitted At\n";
+    
+    members.forEach(m => {
+      const sub = submissions.find(s => s.student_id === m.user_id);
+      const name = m.user?.display_name || m.email?.split('@')[0] || "Student";
+      const email = m.email || "N/A";
+      const status = sub ? sub.status : "Pending";
+      const score = sub?.grade || "0";
+      const date = sub ? new Date(sub.submitted_at).toLocaleDateString() : "-";
+      
+      csv += `"${name}","${email}","${status}","${score}","${date}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedAssignment.title}_Gradebook.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Gradebook downloaded.");
+  };
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -1064,10 +1103,13 @@ function GradingHub({ classId, assignments, onUpdate }: { classId: string; assig
     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="icon" onClick={() => setSelectedAssignment(null)} className="rounded-full h-10 w-10"><ArrowLeft className="h-5 w-5 text-foreground" /></Button>
-        <div>
+        <div className="flex-1">
           <h4 className="font-bold text-xl text-foreground">{selectedAssignment.title}</h4>
           <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">Grading management</p>
         </div>
+        <Button onClick={downloadGradebook} variant="outline" className="h-9 rounded-xl px-4 text-[11px] font-bold border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
+          <Download className="h-3.5 w-3.5 mr-2" /> Gradebook (.csv)
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -1094,7 +1136,8 @@ function GradingHub({ classId, assignments, onUpdate }: { classId: string; assig
                     <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary text-foreground" title="Download">
                       <a href={sub.file_url} target="_blank"><Download className="h-4 w-4" /></a>
                     </Button>
-                    {(sub.file_name?.toLowerCase().endsWith('.pdf') || sub.file_url?.toLowerCase().includes('.pdf')) && (
+                    {/* Support PDF and Images for preview */}
+                    {(sub.file_url?.toLowerCase().match(/\.(pdf|png|jpg|jpeg|webp|gif|svg)/) || sub.file_name?.toLowerCase().match(/\.(pdf|png|jpg|jpeg|webp|gif|svg)/)) && (
                       <Button 
                         onClick={() => setActiveSubmission({...sub, type: 'preview'})} 
                         variant="ghost" 
