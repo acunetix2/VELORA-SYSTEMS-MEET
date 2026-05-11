@@ -1,49 +1,49 @@
--- Migration: Fix RLS Recursion (Simplified)
+-- Migration: Fix RLS Recursion (Final Attempt)
 -- Date: 2026-05-11
 
--- 1. Drop EVERYTHING first to be safe
+-- 1. Drop EVERYTHING
 DROP POLICY IF EXISTS "Classroom select" ON classrooms;
 DROP POLICY IF EXISTS "Classroom manage" ON classrooms;
 DROP POLICY IF EXISTS "Member select" ON classroom_members;
 DROP POLICY IF EXISTS "Member manage" ON classroom_members;
-DROP POLICY IF EXISTS "Classrooms are viewable by members and for joining" ON classrooms;
-DROP POLICY IF EXISTS "Owners can manage classrooms" ON classrooms;
-DROP POLICY IF EXISTS "Class members visibility" ON classroom_members;
-DROP POLICY IF EXISTS "Owners can manage members" ON classroom_members;
+DROP FUNCTION IF EXISTS is_classroom_owner(UUID);
+DROP FUNCTION IF EXISTS is_classroom_member(UUID);
 
--- 2. Create functions without schema prefix first
-CREATE OR REPLACE FUNCTION is_classroom_owner(c_id UUID)
+-- 2. Create Security Definer functions with search_path set to bypass RLS correctly
+CREATE OR REPLACE FUNCTION public.check_is_owner(c_id UUID)
 RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
+  SELECT EXISTS (
     SELECT 1 FROM public.classrooms 
     WHERE id = c_id AND user_id = auth.uid()
   );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
-CREATE OR REPLACE FUNCTION is_classroom_member(c_id UUID)
+CREATE OR REPLACE FUNCTION public.check_is_member(c_id UUID)
 RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
+  SELECT EXISTS (
     SELECT 1 FROM public.classroom_members 
     WHERE classroom_id = c_id 
     AND (user_id = auth.uid() OR email = (SELECT email FROM auth.users WHERE id = auth.uid()))
   );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
--- 3. Apply policies
+-- 3. Apply policies using these functions
 -- Classrooms
 CREATE POLICY "Classroom select" ON public.classrooms FOR SELECT TO authenticated
-  USING (user_id = auth.uid() OR is_classroom_member(id) OR join_code IS NOT NULL);
+  USING (user_id = auth.uid() OR check_is_member(id) OR join_code IS NOT NULL);
 
 CREATE POLICY "Classroom manage" ON public.classrooms FOR ALL TO authenticated
   USING (user_id = auth.uid());
 
 -- Members
 CREATE POLICY "Member select" ON public.classroom_members FOR SELECT TO authenticated
-  USING (user_id = auth.uid() OR email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR is_classroom_owner(classroom_id));
+  USING (
+    user_id = auth.uid() 
+    OR 
+    email = (SELECT email FROM auth.users WHERE id = auth.uid()) 
+    OR 
+    check_is_owner(classroom_id)
+  );
 
 CREATE POLICY "Member manage" ON public.classroom_members FOR ALL TO authenticated
-  USING (is_classroom_owner(classroom_id));
+  USING (check_is_owner(classroom_id));
