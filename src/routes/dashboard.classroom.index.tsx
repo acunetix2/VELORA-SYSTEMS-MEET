@@ -489,10 +489,12 @@ function Page() {
             <div className="h-10 w-10 bg-white/20 rounded-xl grid place-items-center mx-auto mb-3">
               <UserPlus className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-base font-black tracking-tight">Join a Classroom</h2>
-            <p className="text-[11px] text-blue-100 mt-1 mb-4 leading-relaxed">
-              Enter the 6-character class code<br/>from your instructor.
-            </p>
+            <DialogHeader className="space-y-1 mb-4">
+              <DialogTitle className="text-base font-black tracking-tight text-white text-center">Join a Classroom</DialogTitle>
+              <DialogDescription className="text-[11px] text-blue-100 text-center leading-relaxed">
+                Enter the 6-character class code<br/>from your instructor.
+              </DialogDescription>
+            </DialogHeader>
             <Input 
               value={joinCode} 
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())} 
