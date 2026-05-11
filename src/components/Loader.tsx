@@ -1,5 +1,4 @@
 import React from "react";
-import loaderIcon from "/loader-icon.png?url";
 
 interface LoaderProps {
   label?: string;
@@ -25,20 +24,38 @@ export function Loader({ label = "Loading...", className = "", size = "md", vari
 
   return (
     <div className={`${containerClasses} flex flex-col items-center justify-center space-y-4 ${className}`}>
-      <div className="relative h-10 w-10 flex items-center justify-center">
-        {/* Subtle Pulse Ring */}
-        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping duration-1000" />
-        
-        {/* AI Icon Image (Circular) */}
-        <div className="relative h-10 w-10 rounded-full shadow-glow flex items-center justify-center overflow-hidden border border-white/10">
-          <img 
-            src={loaderIcon} 
-            alt="AI Loading" 
-            className="h-full w-full object-cover animate-float"
+      <div className="relative h-12 w-24 flex items-center justify-center">
+        {/* Heartbeat SVG Wave */}
+        <svg
+          viewBox="0 0 100 40"
+          className="w-full h-full text-primary"
+          style={{ filter: "drop-shadow(0 0 8px rgba(var(--primary), 0.4))" }}
+        >
+          <path
+            d="M0 20 H30 L35 10 L40 30 L45 20 H55 L60 0 L65 40 L70 20 H100"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="heartbeat-path"
           />
-          {/* Shimmer Effect */}
-          <div className="absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-100%] animate-shimmer" />
-        </div>
+        </svg>
+
+        {/* CSS Animation for Heartbeat */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .heartbeat-path {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: heartbeat 2s linear infinite;
+          }
+          @keyframes heartbeat {
+            0% { stroke-dashoffset: 200; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0; }
+          }
+        `}} />
       </div>
 
       {label && (
