@@ -221,9 +221,16 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
 
   const startInstantMeeting = async () => {
     if (!cls) return;
+    
+    // Students can ONLY join if a meeting already exists
+    if (!isHost && !cls.meeting_id) {
+      toast.error("No live session in progress. Wait for your instructor.");
+      return;
+    }
+
     const mid = cls.meeting_id || generateMeetingId();
     
-    // If instructor starts, notify students by updating last_live_at
+    // Only instructors can update/create the meeting ID and trigger notifications
     if (isHost) {
       await supabase.from("classrooms").update({ 
         meeting_id: mid,
@@ -269,8 +276,17 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
             <Button variant="outline" size="sm" onClick={generateAiSummary} className="rounded-xl border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 h-9 px-3 text-[11px] font-bold">
               <Sparkles className="h-3.5 w-3.5 mr-2" /> {isAiLoading ? "Analyzing..." : "AI Assist"}
             </Button>
-            <Button onClick={startInstantMeeting} size="sm" className="bg-primary hover:bg-primary/90 text-white gap-2 rounded-xl h-9 px-4 shadow-glow text-[11px] font-bold">
-              <Video className="h-3.5 w-3.5" /> {isHost ? "Start session" : "Join live"}
+            <Button 
+              onClick={startInstantMeeting} 
+              size="sm" 
+              disabled={!isHost && !cls?.meeting_id}
+              className={cn(
+                "gap-2 rounded-xl h-9 px-4 text-[11px] font-bold transition-all",
+                isHost ? "bg-primary hover:bg-primary/90 text-white shadow-glow" : 
+                (cls?.meeting_id ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg" : "bg-muted text-muted-foreground")
+              )}
+            >
+              <Video className="h-3.5 w-3.5" /> {isHost ? "Start session" : (cls?.meeting_id ? "Join now" : "Join live")}
             </Button>
           </div>
         }
