@@ -82,7 +82,12 @@ function Page() {
       });
 
       setClasses(owned || []);
-      setJoinedClasses(uniqueJoined.map((j: any) => j.classrooms).filter(Boolean));
+      // Map and filter out any null classrooms from the join
+      const joined = uniqueJoined
+        .map((j: any) => j.classrooms)
+        .filter((c: any) => c !== null && c !== undefined);
+      
+      setJoinedClasses(joined);
     } catch (err) {
       console.error(err);
     } finally {
