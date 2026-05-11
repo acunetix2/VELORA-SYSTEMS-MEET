@@ -511,8 +511,8 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <div className="relative max-w-xs w-full"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search people..." className="pl-9 h-11 rounded-2xl bg-card border-glass-border text-[13px]" value={search} onChange={e => setSearch(e.target.value)} /></div>
-        {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-9 px-4 text-[12px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add people</Button>}
+        <div className="relative max-w-xs w-full"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search students..." className="pl-9 h-11 rounded-2xl bg-card border-glass-border text-[13px]" value={search} onChange={e => setSearch(e.target.value)} /></div>
+        {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-9 px-4 text-[12px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add student</Button>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? <div className="col-span-full py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : filtered.length === 0 ? (

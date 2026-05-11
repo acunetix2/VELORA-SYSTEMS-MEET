@@ -23,7 +23,7 @@ type NavItem = { id: string; label: string; icon: React.ComponentType<{ classNam
 const NAV: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "sessions", label: "Class Stream", icon: Video },
-  { id: "students", label: "People", icon: Users },
+  { id: "students", label: "Students", icon: Users },
   { id: "resources", label: "Materials", icon: BookOpen },
   { id: "assignments", label: "Assignments", icon: ClipboardList },
 ];
