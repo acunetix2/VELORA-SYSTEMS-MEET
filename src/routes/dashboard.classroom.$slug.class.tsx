@@ -686,6 +686,44 @@ function AssignmentSection({ classId, isHost, currentUser }: { classId: string; 
     setLoading(false);
   };
 
+  const downloadGlobalGradebook = async () => {
+    if (!assignments.length) return;
+    
+    // Fetch all members to ensure we include everyone
+    const { data: members } = await supabase.from("classroom_members").select("*, user:profiles(*)").eq("classroom_id", classId);
+    if (!members) return;
+
+    // Create CSV header: Student, Email, [Assignment Titles...]
+    let header = "Student Name,Email";
+    assignments.forEach(a => {
+      header += `,"${a.title} (${a.points}pts)"`;
+    });
+    header += "\n";
+
+    let rows = "";
+    members.forEach(m => {
+      const name = m.user?.display_name || m.email?.split('@')[0] || "Student";
+      const email = m.email || "N/A";
+      let row = `"${name}","${email}"`;
+      
+      assignments.forEach(a => {
+        const sub = a.submissions?.find((s: any) => s.student_id === m.user_id);
+        const score = sub?.grade || (sub ? "Handed in" : "0");
+        row += `,"${score}"`;
+      });
+      rows += row + "\n";
+    });
+
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Class_Gradebook_Matrix.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Global gradebook downloaded.");
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
@@ -735,9 +773,14 @@ function AssignmentSection({ classId, isHost, currentUser }: { classId: string; 
             <p className="text-[11px] text-muted-foreground font-bold tracking-widest uppercase mt-1">Task management & grading</p>
           </div>
           {isHost && (
-            <Button onClick={() => setIsCreating(true)} className="bg-primary text-white rounded-xl h-10 px-6 font-bold shadow-glow gap-2">
-              <Plus className="h-4 w-4" /> Create task
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={downloadGlobalGradebook} variant="outline" className="rounded-xl h-10 px-4 font-bold border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 gap-2">
+                <Download className="h-4 w-4" /> Export all
+              </Button>
+              <Button onClick={() => setIsCreating(true)} className="bg-primary text-white rounded-xl h-10 px-6 font-bold shadow-glow gap-2">
+                <Plus className="h-4 w-4" /> Create task
+              </Button>
+            </div>
           )}
         </div>
         
