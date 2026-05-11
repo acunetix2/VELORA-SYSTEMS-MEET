@@ -207,30 +207,6 @@ function DashboardInner() {
           <h2 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight leading-tight">
             Welcome back, <span className="text-primary">{displayName.split(" ")[0]}</span>
           </h2>
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="dash-card p-4 flex flex-col gap-1 bg-gradient-to-br from-green-500/5 to-transparent border-green-500/20">
-              <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Platform Health
-              </span>
-              <span className="text-2xl font-black text-green-600">Optimal</span>
-            </div>
-            <div className="dash-card p-4 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Total Sessions</span>
-              <span className="text-2xl font-black text-primary">{analytics.totalMeetings}</span>
-            </div>
-            <div className="dash-card p-4 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Network Status</span>
-              <span className="text-2xl font-black text-primary">24ms <span className="text-[10px] text-muted-foreground font-bold font-mono">RTT</span></span>
-            </div>
-            <div className="dash-card p-4 flex flex-col gap-1 relative overflow-hidden">
-              <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">Usage Trend</span>
-              <div className="flex items-end gap-1 h-8 mt-1">
-                {trends.map((t, i) => (
-                  <div key={i} className="flex-1 bg-primary/30 rounded-t-sm transition-all hover:bg-primary/50" style={{ height: `${Math.max(t, 10)}%` }} />
-                ))}
-              </div>
-            </div>
-          </div>
           <div className="mt-4 flex items-center gap-2 text-muted-foreground/60">
             <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
             <span className="text-sm">Ready for your next session?</span>
