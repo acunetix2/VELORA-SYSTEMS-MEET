@@ -135,6 +135,14 @@ function Page() {
 
     if (error) toast.error("Failed to create class");
     else {
+      // Automatically add the creator as the host member
+      await supabase.from("classroom_members").insert({
+        classroom_id: data.id,
+        user_id: user.id,
+        email: user.email ?? "",
+        role: "host"
+      });
+      
       await push({ title: "Classroom Created", body: `You created "${newName}"`, kind: "success" });
       toast.success("Classroom created!");
       setIsCreating(false);
