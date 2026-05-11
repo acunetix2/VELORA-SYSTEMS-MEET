@@ -515,21 +515,54 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
         {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-9 px-4 text-[12px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add student</Button>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {loading ? <div className="col-span-full py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : filtered.length === 0 ? (
+        {loading ? (
+          <div className="col-span-full py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div>
+        ) : filtered.length === 0 ? (
           <div className="col-span-full py-16 text-center bg-muted/5 rounded-[2rem] border border-dashed border-glass-border">
             <Users className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground font-medium">No students enrolled yet.</p>
           </div>
-        ) : filtered.map(m => (
-          <div key={m.id} className="flex items-center gap-4 p-4 rounded-2xl border border-glass-border bg-card/40 hover:border-primary/30 transition-all group">
-            <Avatar name={m.user?.display_name || m.email} src={m.user?.avatar_url} size="md" className="group-hover:scale-105 transition-transform" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold truncate">{m.user?.display_name || m.email?.split("@")[0] || "Student"}</p>
-              <p className="text-[11px] text-muted-foreground font-bold tracking-tight">{m.role === "host" ? "Instructor" : "Student"}</p>
-            </div>
-            {isHost && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+        ) : (
+          <div className="col-span-full space-y-2">
+            {filtered.map(m => (
+              <div key={m.id} className="flex items-center gap-3 p-2 px-4 rounded-xl border border-glass-border bg-card/30 hover:bg-card/50 transition-all group h-12">
+                <Avatar 
+                  name={m.user?.display_name || m.email} 
+                  src={m.user?.avatar_url} 
+                  size="sm" 
+                  className="h-8 w-8 rounded-lg shadow-sm" 
+                />
+                <div className="flex-1 flex items-center justify-between min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 min-w-0">
+                    <p className="text-[13px] font-bold truncate text-foreground/90">
+                      {m.user?.display_name || m.email?.split("@")[0] || "Student"}
+                    </p>
+                    <span className={cn(
+                      "text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full w-fit",
+                      m.role === 'host' ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground"
+                    )}>
+                      {m.role === "host" ? "Instructor" : "Student"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground hidden md:flex">
+                    <span className="opacity-40">{m.email}</span>
+                    <span className="opacity-30">Joined {new Date(m.joined_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {isHost && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-lg">
+                    <MoreVertical className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
       <Dialog open={isInviting} onOpenChange={setIsInviting}>
         <DialogContent className="glass border-glass-border rounded-[2rem] p-8 max-w-sm"><h2 className="text-xl font-bold mb-2">Enroll student</h2><p className="text-xs text-muted-foreground mb-6 font-medium">Add a student directly by their email address.</p><Input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="student@university.com" className="bg-card/40 h-12 rounded-xl mb-6" /><div className="flex gap-3"><Button variant="ghost" onClick={() => setIsInviting(false)} className="flex-1 rounded-xl h-12 font-bold">Cancel</Button><Button onClick={inviteStudent} className="flex-1 bg-primary text-white rounded-xl h-12 font-bold shadow-glow">Enrol student</Button></div></DialogContent>
