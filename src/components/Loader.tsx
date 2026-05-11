@@ -26,12 +26,12 @@ export function Loader({ label = "Loading...", className = "", size = "md", vari
     <div className={`${containerClasses} flex flex-col items-center justify-center space-y-4 ${className}`}>
       <div className="relative h-10 w-10 flex items-center justify-center">
         {/* Subtle Pulse Ring */}
-        <div className="absolute inset-0 rounded-xl bg-primary/20 animate-ping duration-1000" />
+        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping duration-1000" />
         
-        {/* AI Icon Image */}
-        <div className="relative h-10 w-10 rounded-xl bg-black shadow-glow flex items-center justify-center overflow-hidden border border-white/10">
+        {/* AI Icon Image (Circular) */}
+        <div className="relative h-10 w-10 rounded-full bg-black shadow-glow flex items-center justify-center overflow-hidden border border-white/10">
           <img 
-            src="/ai_circuit_icon_1778503183751.png" 
+            src="/loader-icon.png" 
             alt="AI Loading" 
             className="h-full w-full object-cover animate-float"
           />
