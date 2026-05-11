@@ -19,52 +19,72 @@ export function Loader({ label = "Loading...", className = "", size = "md", vari
   }
 
   const containerClasses = fullScreen 
-    ? "fixed inset-0 z-[100] bg-background/80 backdrop-blur-md" 
-    : "w-full py-12";
+    ? "fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl" 
+    : "w-full py-16";
 
   return (
-    <div className={`${containerClasses} flex flex-col items-center justify-center space-y-4 ${className}`}>
-      <div className="relative h-12 w-24 flex items-center justify-center">
-        {/* Heartbeat SVG Wave */}
+    <div className={`${containerClasses} flex flex-col items-center justify-center space-y-8 ${className}`}>
+      {/* Patient Monitor Console */}
+      <div className="relative h-24 w-48 rounded-[1.5rem] bg-black border border-white/10 overflow-hidden shadow-2xl ring-1 ring-white/5">
+        {/* Electronic Grid Background */}
+        <div 
+          className="absolute inset-0 opacity-[0.15]" 
+          style={{ 
+            backgroundImage: `linear-gradient(#00ff88 1px, transparent 1px), linear-gradient(90deg, #00ff88 1px, transparent 1px)`,
+            backgroundSize: '12px 12px'
+          }} 
+        />
+
+        {/* Scanline Effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-full w-full animate-scanline" />
+
+        {/* EKG Heartbeat Wave */}
         <svg
           viewBox="0 0 100 40"
-          className="w-full h-full text-primary"
-          style={{ filter: "drop-shadow(0 0 8px rgba(var(--primary), 0.4))" }}
+          className="absolute inset-0 w-full h-full text-[#00ff88]"
+          style={{ filter: "drop-shadow(0 0 4px #00ff88)" }}
         >
           <path
-            d="M0 20 H30 L35 10 L40 30 L45 20 H55 L60 0 L65 40 L70 20 H100"
+            d="M0 20 H20 L25 15 L30 25 L35 20 H45 L50 5 L55 35 L60 20 H100"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="heartbeat-path"
+            className="heartbeat-monitor-path"
           />
         </svg>
 
-        {/* CSS Animation for Heartbeat */}
+        {/* Animation Styles */}
         <style dangerouslySetInnerHTML={{ __html: `
-          .heartbeat-path {
+          .heartbeat-monitor-path {
             stroke-dasharray: 200;
             stroke-dashoffset: 200;
-            animation: heartbeat 2s linear infinite;
+            animation: monitor-beat 2.5s linear infinite;
           }
-          @keyframes heartbeat {
+          @keyframes monitor-beat {
             0% { stroke-dashoffset: 200; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
             100% { stroke-dashoffset: 0; opacity: 0; }
+          }
+          @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+          }
+          .animate-scanline {
+            animation: scanline 4s linear infinite;
           }
         `}} />
       </div>
 
       {label && (
-        <div className="flex flex-col items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-700">
-          <p className="text-[13px] font-medium text-muted-foreground tracking-tight">{label}</p>
-          <div className="flex gap-1">
-            <span className="h-1 w-1 rounded-full bg-primary/40 animate-bounce" />
-            <span className="h-1 w-1 rounded-full bg-primary/40 animate-bounce delay-150" />
-            <span className="h-1 w-1 rounded-full bg-primary/40 animate-bounce delay-300" />
+        <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+          <p className="text-[13px] font-medium text-muted-foreground tracking-widest">{label}</p>
+          <div className="flex gap-1.5">
+            <span className="h-1 w-1 rounded-full bg-[#00ff88]/40 animate-pulse" />
+            <span className="h-1 w-1 rounded-full bg-[#00ff88]/40 animate-pulse delay-150" />
+            <span className="h-1 w-1 rounded-full bg-[#00ff88]/40 animate-pulse delay-300" />
           </div>
         </div>
       )}
