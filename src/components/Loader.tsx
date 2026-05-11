@@ -1,4 +1,5 @@
 import React from "react";
+import loaderIcon from "/loader-icon.png?url";
 
 interface LoaderProps {
   label?: string;
@@ -29,9 +30,9 @@ export function Loader({ label = "Loading...", className = "", size = "md", vari
         <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping duration-1000" />
         
         {/* AI Icon Image (Circular) */}
-        <div className="relative h-10 w-10 rounded-full bg-black shadow-glow flex items-center justify-center overflow-hidden border border-white/10">
+        <div className="relative h-10 w-10 rounded-full shadow-glow flex items-center justify-center overflow-hidden border border-white/10">
           <img 
-            src="/loader-icon.png" 
+            src={loaderIcon} 
             alt="AI Loading" 
             className="h-full w-full object-cover animate-float"
           />
