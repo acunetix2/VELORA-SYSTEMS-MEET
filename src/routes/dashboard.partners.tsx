@@ -39,6 +39,7 @@ function PartnerDashboard() {
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [partnerData, setPartnerData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
   
   const referralLink = partnerData 
     ? `${window.location.origin}/join?ref=${partnerData.referral_code}`
@@ -76,6 +77,7 @@ function PartnerDashboard() {
         // Fallback for UI if DB table doesn't exist yet
         setShowOnboarding(!localStorage.getItem("velora:partner_onboarded"));
       } finally {
+        setMfaEnabled(false);
         setLoading(false);
       }
     };
@@ -92,7 +94,7 @@ function PartnerDashboard() {
     }
     localStorage.setItem("velora:partner_onboarded", "true");
     setShowOnboarding(false);
-    setPartnerData(prev => prev ? { ...prev, onboarded: true } : null);
+    setPartnerData((prev: any) => prev ? { ...prev, onboarded: true } : null);
     toast.success("Welcome to the ecosystem! You're ready to grow.");
   };
 

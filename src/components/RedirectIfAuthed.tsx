@@ -10,7 +10,7 @@ export function RedirectIfAuthed({
   to,
   children,
 }: {
-  to: "/dashboard" | "/dashboard/security" | "/dashboard/faq";
+  to: "/dashboard" | "/dashboard/settings" | "/dashboard/faq";
   children: ReactNode;
 }) {
   const { user, loading } = useAuth();

@@ -17,8 +17,11 @@ import {
   BarChart2, Sparkles, BrainCircuit, Zap, MessageSquare, Info, ArrowRight,
   RefreshCcw, Globe, BookOpen, ClipboardList, PenTool, Layout, Eye,
   Trophy, AlertCircle, CalendarDays, Filter, CalendarSearch, Paperclip, X,
-  Upload, Download
+  Upload, Download, Activity, Send
 } from "lucide-react";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from "recharts";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
   DropdownMenuTrigger, DropdownMenuSeparator 
@@ -59,7 +62,8 @@ function Page() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const [tab, setTab] = useState<"dashboard" | "students" | "sessions" | "resources" | "assignments">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "students" | "sessions" | "resources" | "assignments" | "syllabus">("dashboard");
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [cls, setCls] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isHost, setIsHost] = useState(false);
@@ -72,13 +76,16 @@ function Page() {
   const [editDesc, setEditDesc] = useState("");
   const [editBanner, setEditBanner] = useState<string | null>(null);
   const [isUpdatingClass, setIsUpdatingClass] = useState(false);
-  
   const [stats, setStats] = useState({
     membersCount: 0,
     commentsCount: 0,
     resourcesCount: 0,
     attendanceRate: 0,
-    resourceRate: 0
+    resourceRate: 0,
+    assignmentsCount: 0,
+    submissionsCount: 0,
+    averageScore: 0,
+    syllabusProgress: 0
   });
   
   useEffect(() => {
@@ -110,21 +117,59 @@ function Page() {
       setEditDesc(data.description || "");
       setEditBanner(data.preview_image_url);
       
-      const [membersRes, commentsRes, resourcesRes] = await Promise.all([
+      const [membersRes, commentsRes, resourcesRes, assignmentsRes, syllabusRes] = await Promise.all([
         supabase.from("classroom_members").select("id, user_id", { count: "exact" }).eq("classroom_id", data.id),
         supabase.from("classroom_comments").select("author_id").eq("classroom_id", data.id),
-        supabase.from("classroom_resources").select("id", { count: "exact", head: true }).eq("classroom_id", data.id)
+        supabase.from("classroom_resources").select("id", { count: "exact", head: true }).eq("classroom_id", data.id),
+        supabase.from("classroom_assignments").select("id, points, type, submissions:classroom_submissions(*)").eq("classroom_id", data.id),
+        supabase.from("classroom_syllabus").select("status").eq("classroom_id", data.id)
       ]);
 
       const membersCount = membersRes.count || 1;
       const commentsCount = commentsRes.data?.length || 0;
       const resourcesCount = resourcesRes.count || 0;
+      const assignmentsCount = assignmentsRes.data?.length || 0;
+      
+      const allSubmissions = assignmentsRes.data?.flatMap(a => a.submissions) || [];
+      const submissionsCount = allSubmissions.length;
+      
+      // Calculate average score for the class (or student)
+      let averageScore = 0;
+      if (data.user_id === user?.id) {
+        // Lecturer sees class average
+        const graded = allSubmissions.filter(s => s.grade);
+        if (graded.length > 0) {
+          const sum = graded.reduce((acc, s) => acc + (parseFloat(s.grade) || 0), 0);
+          averageScore = Math.round(sum / graded.length);
+        }
+      } else {
+        // Student sees their own average
+        const studentSubs = allSubmissions.filter(s => s.student_id === user?.id && s.grade);
+        if (studentSubs.length > 0) {
+          const sum = studentSubs.reduce((acc, s) => acc + (parseFloat(s.grade) || 0), 0);
+          averageScore = Math.round(sum / studentSubs.length);
+        }
+      }
+
+      const syllabusCompleted = syllabusRes.data?.filter(s => s.status === 'completed').length || 0;
+      const syllabusTotal = syllabusRes.data?.length || 0;
+      const syllabusProgress = syllabusTotal > 0 ? Math.round((syllabusCompleted / syllabusTotal) * 100) : 0;
 
       const uniqueCommenters = new Set(commentsRes.data?.map(c => c.author_id)).size;
       const attendanceRate = membersCount > 0 ? Math.round((uniqueCommenters / membersCount) * 100) : 0;
       const resourceRate = membersCount > 0 ? Math.min(100, Math.round(((commentsCount / membersCount) / 2) * 100)) : 0;
 
-      setStats({ membersCount, commentsCount, resourcesCount, attendanceRate: attendanceRate || 0, resourceRate: resourceRate || 0 });
+      setStats({ 
+        membersCount, 
+        commentsCount, 
+        resourcesCount, 
+        attendanceRate: attendanceRate || 0, 
+        resourceRate: resourceRate || 0,
+        assignmentsCount,
+        submissionsCount,
+        averageScore,
+        syllabusProgress
+      });
     } catch (err) {
       console.error(err);
       toast.error("An error occurred.");
@@ -132,6 +177,40 @@ function Page() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!cls || !currentUser) return;
+
+    const channel = supabase.channel(`classroom_presence_${cls.id}`, {
+      config: {
+        presence: {
+          key: currentUser.id,
+        },
+      },
+    });
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        const onlineIds = new Set<string>();
+        Object.keys(state).forEach((key) => {
+          onlineIds.add(key);
+        });
+        setOnlineUsers(onlineIds);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await channel.track({
+            user_id: currentUser.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cls?.id, currentUser?.id]);
 
   const updateClass = async () => {
     if (!editName.trim() || !cls) return;
@@ -331,11 +410,12 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
                 <div className="bg-card border border-glass-border rounded-[2rem] overflow-hidden shadow-sm min-h-[400px]">
                   {cls && (
                     <>
-                      {tab === "dashboard" && <ClassDashboard classId={cls.id} isHost={isHost} onGenerateGuide={generateAiSummary} isGenerating={isAiLoading} />}
-                      {tab === "students" && <StudentList classId={cls.id} isHost={isHost} />}
+                      {tab === "dashboard" && <ClassDashboard classId={cls.id} isHost={isHost} stats={stats} onGenerateGuide={generateAiSummary} isGenerating={isAiLoading} />}
+                      {tab === "students" && <StudentList classId={cls.id} isHost={isHost} onlineUsers={onlineUsers} />}
                       {tab === "sessions" && <SessionHistory classId={cls.id} isHost={isHost} meetingId={cls.meeting_id} />}
                       {tab === "resources" && <ResourceLibrary classId={cls.id} isHost={isHost} currentUser={currentUser} />}
                       {tab === "assignments" && <AssignmentSection classId={cls.id} isHost={isHost} currentUser={currentUser} />}
+                      {tab === "syllabus" && <SyllabusTracking classId={cls.id} isHost={isHost} />}
                     </>
                   )}
                 </div>
@@ -390,6 +470,23 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
                    </Button>
                 </div>
   
+                <div className="bg-card border border-glass-border rounded-[2rem] p-6">
+                   <h3 className="text-[11px] font-bold text-muted-foreground mb-4 tracking-tight">Academic Progress</h3>
+                   <div className="space-y-5">
+                      <div>
+                        <div className="flex justify-between text-[11px] font-bold mb-1.5 tracking-tight"><span>Syllabus Tracking</span><span className="text-primary">{stats.syllabusProgress}%</span></div>
+                        <div className="h-1 bg-muted/30 rounded-full overflow-hidden"><div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${stats.syllabusProgress}%` }} /></div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] font-bold mb-1.5 tracking-tight"><span>Class Avg / Score</span><span className="text-emerald-500">{stats.averageScore}%</span></div>
+                        <div className="h-1 bg-muted/30 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${stats.averageScore}%` }} /></div>
+                      </div>
+                   </div>
+                   <div className="mt-6 pt-4 border-t border-glass-border flex justify-between items-center text-[10px] font-bold text-muted-foreground/60">
+                     <span>Tasks: {stats.assignmentsCount}</span><span>Subs: {stats.submissionsCount}</span>
+                   </div>
+                </div>
+                
                 <div className="bg-card border border-glass-border rounded-[2rem] p-6">
                    <h3 className="text-[11px] font-bold text-muted-foreground mb-4 tracking-tight">Engagement</h3>
                    <div className="space-y-5">
@@ -453,44 +550,322 @@ Avoid raw markdown like ### or **. Use clear section names and list points with 
   );
 }
 
-function ClassDashboard({ classId, isHost, onGenerateGuide, isGenerating }: { classId: string; isHost: boolean; onGenerateGuide?: () => void; isGenerating?: boolean }) {
+function ClassDashboard({ classId, isHost, stats, onGenerateGuide, isGenerating }: { classId: string; isHost: boolean; stats: any; onGenerateGuide?: () => void; isGenerating?: boolean }) {
+  const [personalScores, setPersonalScores] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [classId, isHost]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const [scoresRes, commentsRes] = await Promise.all([
+      supabase.from("classroom_assignments").select("*, submissions:classroom_submissions(*)").eq("classroom_id", classId),
+      supabase.from("classroom_comments").select("created_at").eq("classroom_id", classId).order('created_at', { ascending: true })
+    ]);
+    
+    if (scoresRes.data) {
+      const scores = scoresRes.data.map(a => {
+        const sub = a.submissions?.find((s: any) => s.student_id === user.id);
+        return {
+          title: a.title,
+          type: a.type,
+          points: a.points,
+          grade: sub?.grade || 0,
+          status: sub?.status || 'missing'
+        };
+      });
+      setPersonalScores(scores);
+    }
+
+    if (commentsRes.data) {
+      // Group by day for the last 7 days
+      const days: any = {};
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        days[d.toISOString().split('T')[0]] = 0;
+      }
+
+      commentsRes.data.forEach(c => {
+        const date = c.created_at.split('T')[0];
+        if (days[date] !== undefined) days[date]++;
+      });
+
+      const chartData = Object.entries(days).map(([date, count]) => ({
+        name: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+        activity: count
+      }));
+      setActivityData(chartData);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="p-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border hover:bg-muted/30 transition-all group">
-          <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform"><Users className="h-5 w-5" /></div>
-          <h3 className="text-[15px] font-bold mb-1">Collaborative environment</h3>
-          <p className="text-[13px] text-muted-foreground leading-relaxed font-medium">Interact with your classmates and join live sessions with a single click.</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <div>
+          <h3 className="text-2xl font-black tracking-tight">{isHost ? "Class Overview" : "My Progress"}</h3>
+          <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
+            {isHost ? "Performance & Analytics" : "Scores & Achievements"}
+          </p>
         </div>
-        <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border hover:bg-muted/30 transition-all group">
-          <div className="h-10 w-10 rounded-xl bg-green-500/10 text-green-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform"><FileText className="h-5 w-5" /></div>
-          <h3 className="text-[15px] font-bold mb-1">Knowledge library</h3>
-          <p className="text-[13px] text-muted-foreground leading-relaxed font-medium">All class materials, recordings, and assignments are organized for easy access.</p>
-        </div>
-      </div>
-      <div className="mt-8 p-6 rounded-[2rem] bg-gradient-to-br from-primary/10 to-transparent border border-primary/10 flex flex-col sm:flex-row items-center gap-6">
-        <div className="h-16 w-16 rounded-[1.5rem] bg-white grid place-items-center shadow-lg shrink-0">
-          <div className={`h-12 w-12 rounded-xl bg-primary text-white grid place-items-center ${isGenerating ? 'animate-pulse' : ''}`}>
-            <BrainCircuit className="h-6 w-6" />
+        <div className="flex gap-4">
+          <div className="text-center">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Average</p>
+            <p className="text-2xl font-black text-primary">{stats.averageScore}%</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Syllabus</p>
+            <p className="text-2xl font-black text-blue-500">{stats.syllabusProgress}%</p>
           </div>
         </div>
-        <div className="flex-1 text-center sm:text-left">
-          <h3 className="text-lg font-bold">Quick start guide</h3>
-          <p className="text-sm text-muted-foreground font-medium">Get personalized AI guidance on how to master your classroom in seconds.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {isHost ? (
+              <>
+                <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border hover:bg-muted/30 transition-all group">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform"><Users className="h-5 w-5" /></div>
+                  <h3 className="text-[13px] font-bold mb-1">Students</h3>
+                  <p className="text-2xl font-black text-foreground">{stats.membersCount}</p>
+                </div>
+                <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border hover:bg-muted/30 transition-all group">
+                  <div className="h-10 w-10 rounded-xl bg-green-500/10 text-green-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform"><ClipboardList className="h-5 w-5" /></div>
+                  <h3 className="text-[13px] font-bold mb-1">Tasks</h3>
+                  <p className="text-2xl font-black text-foreground">{stats.assignmentsCount}</p>
+                </div>
+                <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border hover:bg-muted/30 transition-all group">
+                  <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 grid place-items-center mb-4 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-5 w-5" /></div>
+                  <h3 className="text-[13px] font-bold mb-1">Subs</h3>
+                  <p className="text-2xl font-black text-foreground">{stats.submissionsCount}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                {personalScores.length === 0 ? (
+                  <div className="col-span-full py-10 text-center bg-muted/5 rounded-[2rem] border border-dashed border-glass-border">
+                    <p className="text-sm text-muted-foreground font-medium">No scores to display yet.</p>
+                  </div>
+                ) : (
+                  personalScores.slice(0, 3).map((s, idx) => (
+                    <div key={idx} className="p-5 rounded-[2rem] bg-muted/20 border border-glass-border group hover:bg-muted/30 transition-all">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={cn("h-7 w-7 rounded-lg grid place-items-center", 
+                            s.type === 'cat' ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"
+                        )}>
+                          {s.type === 'cat' ? <Trophy className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                        </div>
+                        <p className="text-[11px] font-bold truncate flex-1">{s.title}</p>
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <p className="text-2xl font-black text-foreground">{s.grade || 0}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">{s.type}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="p-6 rounded-[2rem] bg-muted/20 border border-glass-border">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Class Activity Trends</h4>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-primary" />
+                <span className="text-[10px] font-bold text-foreground">Weekly interaction</span>
+              </div>
+            </div>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={activityData}>
+                  <defs>
+                    <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '1rem', border: 'none', background: 'hsl(var(--card))', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ fontSize: '10px', fontWeight: 'bold', color: 'hsl(var(--primary))' }}
+                  />
+                  <Area type="monotone" dataKey="activity" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorActivity)" />
+                  <XAxis dataKey="name" hide />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
-        <Button 
-          onClick={onGenerateGuide} 
-          disabled={isGenerating}
-          className="rounded-xl h-10 px-6 bg-primary text-white font-bold text-[12px] shadow-glow"
-        >
-          {isGenerating ? "Analyzing..." : "AI Guide"}
-        </Button>
+
+        <div className="space-y-6">
+          <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-primary/10 to-transparent border border-primary/10 h-full flex flex-col justify-between group overflow-hidden relative">
+            <div className="relative z-10">
+              <div className="h-12 w-12 rounded-2xl bg-white grid place-items-center shadow-lg mb-6 group-hover:scale-110 transition-transform">
+                <BrainCircuit className={cn("h-6 w-6 text-primary", isGenerating ? 'animate-pulse' : '')} />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Velora Intelligence</h3>
+              <p className="text-[13px] text-muted-foreground font-medium leading-relaxed mb-6">Master your classroom with personalized AI guidance based on recent interactions.</p>
+            </div>
+            <Button 
+              onClick={onGenerateGuide} 
+              disabled={isGenerating}
+              className="rounded-xl h-12 w-full bg-primary text-white font-bold text-[12px] shadow-glow relative z-10"
+            >
+              {isGenerating ? "Analyzing..." : "Generate Guide"}
+            </Button>
+            <Sparkles className="absolute -bottom-4 -right-4 h-24 w-24 text-primary/5 group-hover:scale-125 transition-transform duration-700" />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) {
+function SyllabusTracking({ classId, isHost }: { classId: string; isHost: boolean }) {
+  const [topics, setTopics] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTopic, setNewTopic] = useState({ title: "", description: "" });
+
+  useEffect(() => { fetchSyllabus(); }, [classId]);
+
+  const fetchSyllabus = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("classroom_syllabus").select("*").eq("classroom_id", classId).order("order_index", { ascending: true });
+    setTopics(data || []);
+    setLoading(false);
+  };
+
+  const addTopic = async () => {
+    if (!newTopic.title.trim()) return;
+    const { error } = await supabase.from("classroom_syllabus").insert({
+      classroom_id: classId,
+      title: newTopic.title.trim(),
+      description: newTopic.description.trim(),
+      order_index: topics.length
+    });
+    if (!error) {
+      toast.success("Topic added to syllabus.");
+      setIsAdding(false);
+      setNewTopic({ title: "", description: "" });
+      fetchSyllabus();
+    }
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("classroom_syllabus").update({ status }).eq("id", id);
+    if (!error) {
+      toast.success("Progress updated.");
+      fetchSyllabus();
+    }
+  };
+
+  const deleteTopic = async (id: string) => {
+    const { error } = await supabase.from("classroom_syllabus").delete().eq("id", id);
+    if (!error) {
+      toast.success("Topic removed.");
+      fetchSyllabus();
+    }
+  };
+
+  return (
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h3 className="text-2xl font-black tracking-tight">Course Syllabus</h3>
+          <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Curriculum & Progress Tracking</p>
+        </div>
+        {isHost && (
+          <Button onClick={() => setIsAdding(true)} className="bg-primary text-white rounded-xl h-10 px-4 text-[12px] font-bold shadow-glow">
+            <Plus className="h-4 w-4 mr-2" /> Add topic
+          </Button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>
+      ) : topics.length === 0 ? (
+        <div className="py-24 text-center bg-muted/5 rounded-[2.5rem] border border-dashed border-glass-border">
+          <BookOpen className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground font-medium">No curriculum topics defined yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {topics.map((topic, idx) => (
+            <div key={topic.id} className="flex items-center gap-6 p-6 rounded-[2rem] border border-glass-border bg-card/40 hover:bg-card/60 transition-all group">
+              <div className="h-10 w-10 rounded-xl bg-muted/50 text-muted-foreground grid place-items-center font-black text-xs shrink-0">
+                {idx + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className={cn("text-[16px] font-bold text-foreground", topic.status === 'completed' && "line-through opacity-50")}>{topic.title}</h4>
+                <p className="text-[13px] text-muted-foreground line-clamp-1 font-medium">{topic.description || "No description provided."}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {isHost ? (
+                   <DropdownMenu>
+                     <DropdownMenuTrigger asChild>
+                       <Button variant={topic.status === 'completed' ? "outline" : "velora-save"} size="thin" className="h-9 px-4 text-[10px]">
+                         {topic.status === 'completed' ? "Completed" : topic.status === 'in_progress' ? "In Progress" : "Pending"}
+                       </Button>
+                     </DropdownMenuTrigger>
+                     <DropdownMenuContent align="end" className="glass border-glass-border p-1">
+                       <DropdownMenuItem onClick={() => updateStatus(topic.id, 'pending')} className="text-[10px] font-bold rounded-lg">Pending</DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => updateStatus(topic.id, 'in_progress')} className="text-[10px] font-bold rounded-lg">In Progress</DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => updateStatus(topic.id, 'completed')} className="text-[10px] font-bold rounded-lg text-emerald-500">Completed</DropdownMenuItem>
+                       <DropdownMenuSeparator />
+                       <DropdownMenuItem onClick={() => deleteTopic(topic.id)} className="text-[10px] font-bold rounded-lg text-destructive">Delete</DropdownMenuItem>
+                     </DropdownMenuContent>
+                   </DropdownMenu>
+                ) : (
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                    topic.status === 'completed' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : 
+                    topic.status === 'in_progress' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" : 
+                    "bg-muted text-muted-foreground border-glass-border"
+                  )}>
+                    {topic.status.replace("_", " ")}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isAdding} onOpenChange={setIsAdding}>
+        <DialogContent className="glass border-glass-border rounded-[2rem] p-8 max-w-sm">
+          <h2 className="text-2xl font-bold mb-2">New curriculum topic</h2>
+          <p className="text-xs text-muted-foreground mb-8 font-medium">Define a new subject or module for the class syllabus.</p>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-foreground ml-1">Topic title</Label>
+              <Input value={newTopic.title} onChange={e => setNewTopic({...newTopic, title: e.target.value})} placeholder="e.g. Unit 1: Algebra Fundamentals" className="bg-card/40 h-12 rounded-xl text-foreground" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-foreground ml-1">Description (Optional)</Label>
+              <Textarea value={newTopic.description} onChange={e => setNewTopic({...newTopic, description: e.target.value})} placeholder="Summary of what will be covered..." className="bg-card/40 min-h-[100px] rounded-xl resize-none text-foreground" />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" onClick={() => setIsAdding(false)} className="flex-1 rounded-xl h-12 font-bold">Cancel</Button>
+              <Button onClick={addTopic} className="flex-1 bg-primary text-white rounded-xl h-12 font-bold shadow-glow">Add topic</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function StudentList({ classId, isHost, onlineUsers }: { classId: string; isHost: boolean; onlineUsers: Set<string> }) {
   const [search, setSearch] = useState("");
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -541,8 +916,16 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <div className="relative max-w-xs w-full"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search students..." className="pl-9 h-11 rounded-2xl bg-card border-glass-border text-[13px]" value={search} onChange={e => setSearch(e.target.value)} /></div>
-        {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-9 px-4 text-[12px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add student</Button>}
+        <div>
+          <h3 className="text-xl font-bold text-foreground">Class Roster</h3>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+            {onlineUsers.size} active now <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </p>
+        </div>
+        <div className="flex gap-3 items-center">
+          <div className="relative max-w-xs w-full hidden sm:block"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search students..." className="pl-9 h-10 rounded-xl bg-card border-glass-border text-[13px]" value={search} onChange={e => setSearch(e.target.value)} /></div>
+          {isHost && <Button onClick={() => setIsInviting(true)} className="bg-primary text-white rounded-xl h-10 px-4 text-[11px] font-bold shadow-glow"><UserPlus className="h-4 w-4 mr-2" /> Add student</Button>}
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
@@ -554,43 +937,54 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
           </div>
         ) : (
           <div className="col-span-full space-y-2">
-            {filtered.map(m => (
-              <div key={m.id} className="flex items-center gap-3 p-2 px-4 rounded-xl border border-glass-border bg-card/30 hover:bg-card/50 transition-all group h-12">
-                <Avatar 
-                  name={m.user?.display_name || m.email} 
-                  src={m.user?.avatar_url} 
-                  size="sm" 
-                  className="h-8 w-8 rounded-lg shadow-sm" 
-                />
-                <div className="flex-1 flex items-center justify-between min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 min-w-0">
-                    <p className="text-[13px] font-bold truncate text-foreground/90">
-                      {m.user?.display_name || m.email?.split("@")[0] || "Student"}
-                    </p>
-                    <span className={cn(
-                      "text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full w-fit",
-                      m.role === 'host' ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground"
-                    )}>
-                      {m.role === "host" ? "Instructor" : "Student"}
-                    </span>
+            {filtered.map(m => {
+              const isOnline = onlineUsers.has(m.user_id);
+              return (
+                <div key={m.id} className="flex items-center gap-3 p-2 px-4 rounded-xl border border-glass-border bg-card/30 hover:bg-card/50 transition-all group h-12">
+                  <div className="relative">
+                    <Avatar 
+                      name={m.user?.display_name || m.email} 
+                      src={m.user?.avatar_url} 
+                      size="sm" 
+                      className="h-8 w-8 rounded-lg shadow-sm" 
+                    />
+                    {isOnline && (
+                      <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background ring-2 ring-emerald-500/20" />
+                    )}
                   </div>
-                  <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground hidden md:flex">
-                    <span className="opacity-40">{m.email}</span>
-                    <span className="opacity-30">Joined {new Date(m.joined_at).toLocaleDateString()}</span>
+                  <div className="flex-1 flex items-center justify-between min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-bold truncate text-foreground/90">
+                          {m.user?.display_name || m.email?.split("@")[0] || "Student"}
+                        </p>
+                        {isOnline && <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Live</span>}
+                      </div>
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full w-fit",
+                        m.role === 'host' ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground"
+                      )}>
+                        {m.role === "host" ? "Instructor" : "Student"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground hidden lg:flex">
+                      <span className="opacity-40">{m.email}</span>
+                      <span className="opacity-30">Joined {new Date(m.joined_at).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {isHost && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg">
-                      <Trash2 className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-1">
+                    {isHost && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-lg">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-lg">
+                      <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-lg">
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -603,8 +997,21 @@ function StudentList({ classId, isHost }: { classId: string; isHost: boolean }) 
 
 function SessionHistory({ classId, isHost, meetingId }: { classId: string; isHost: boolean; meetingId?: string }) {
   const [sessions, setSessions] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(true);
-  useEffect(() => { fetchSessions(); }, [classId]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { 
+    fetchSessions(); 
+    fetchStreamChat();
+    subscribeToStream();
+  }, [classId]);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
+
   const fetchSessions = async () => {
     try {
       setLoading(true);
@@ -612,18 +1019,116 @@ function SessionHistory({ classId, isHost, meetingId }: { classId: string; isHos
       setSessions(data || []);
     } finally { setLoading(false); }
   };
+
+  const fetchStreamChat = async () => {
+    const { data } = await supabase
+      .from("classroom_comments")
+      .select("*, author:profiles!author_id(*)")
+      .eq("classroom_id", classId)
+      .order("created_at", { ascending: true });
+    setMessages(data || []);
+  };
+
+  const subscribeToStream = () => {
+    const channel = supabase.channel(`classroom_stream_${classId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "classroom_comments", filter: `classroom_id=eq.${classId}` }, (payload) => {
+        // Since we need author profile, we could re-fetch or just add placeholder if we have user info
+        fetchStreamChat(); 
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  };
+
+  const sendStreamMessage = async () => {
+    if (!inputText.trim()) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.from("classroom_comments").insert({
+      classroom_id: classId,
+      author_id: user.id,
+      comment: inputText.trim()
+    });
+
+    if (!error) setInputText("");
+  };
+
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8"><h3 className="font-bold text-lg">Class stream</h3><Button variant="outline" className="h-8 px-4 rounded-xl text-[11px] font-bold border-glass-border">Refresh</Button></div>
-      {loading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : sessions.length === 0 ? (
-        <div className="py-20 text-center bg-muted/10 rounded-[2rem] border border-dashed border-glass-border"><Video className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" /><p className="text-sm text-muted-foreground font-medium">No sessions recorded yet.</p></div>
-      ) : (
-        <div className="space-y-3">
-          {sessions.map(s => (
-            <div key={s.id} className="flex items-center gap-4 p-5 rounded-[1.5rem] border border-glass-border bg-card/40 hover:bg-card/60 transition-all"><div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0"><Video className="h-5 w-5" /></div><div className="flex-1 min-w-0"><p className="font-bold text-[14px]">Live session #{s.id.slice(0, 4)}</p><div className="flex items-center gap-2 mt-0.5"><p className="text-[11px] text-muted-foreground font-bold">{new Date(s.created_at).toLocaleDateString()}</p><span className="h-1 w-1 rounded-full bg-muted-foreground" /><p className="text-[11px] text-muted-foreground font-bold">{new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p></div></div><Button size="sm" className="h-8 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-bold text-[11px] px-4">View logs</Button></div>
+    <div className="flex flex-col lg:flex-row h-[700px] overflow-hidden">
+      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-r border-glass-border">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="font-bold text-2xl tracking-tight">Class Stream</h3>
+            <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Recorded Sessions & Logs</p>
+          </div>
+          <Button variant="outline" onClick={fetchSessions} className="h-8 px-4 rounded-xl text-[11px] font-bold border-glass-border">Refresh</Button>
+        </div>
+        {loading ? <div className="py-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div> : sessions.length === 0 ? (
+          <div className="py-20 text-center bg-muted/10 rounded-[2rem] border border-dashed border-glass-border"><Video className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" /><p className="text-sm text-muted-foreground font-medium">No sessions recorded yet.</p></div>
+        ) : (
+          <div className="space-y-3">
+            {sessions.map(s => (
+              <div key={s.id} className="flex items-center gap-4 p-5 rounded-[1.5rem] border border-glass-border bg-card/40 hover:bg-card/60 transition-all group">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0 group-hover:scale-110 transition-transform"><Video className="h-5 w-5" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[14px]">Live session #{s.id.slice(0, 4)}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-[11px] text-muted-foreground font-bold">{new Date(s.created_at).toLocaleDateString()}</p>
+                    <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+                    <p className="text-[11px] text-muted-foreground font-bold">{new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+                <Button size="sm" className="h-8 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-bold text-[11px] px-4 opacity-0 group-hover:opacity-100 transition-opacity">View logs</Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <aside className="w-full lg:w-[350px] bg-muted/5 flex flex-col h-full">
+        <div className="p-4 border-b border-glass-border bg-card/50 flex items-center justify-between">
+          <h4 className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <MessageSquare className="h-3.5 w-3.5" /> Live Discussion
+          </h4>
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        </div>
+        
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          {messages.map((m, i) => (
+            <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <Avatar name={m.author?.display_name || "User"} size="sm" className="h-7 w-7 rounded-lg" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-bold text-foreground truncate">{m.author?.display_name || "Class Member"}</span>
+                  <span className="text-[9px] text-muted-foreground">{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <p className="text-[12px] leading-relaxed text-foreground/80 break-words font-medium">{m.comment}</p>
+              </div>
+            </div>
           ))}
         </div>
-      )}
+
+        <div className="p-4 border-t border-glass-border bg-card/30">
+          <div className="relative">
+            <Input 
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendStreamMessage()}
+              placeholder="Say something..." 
+              className="h-10 rounded-xl bg-background/50 pl-4 pr-10 text-[12px] border-glass-border"
+            />
+            <Button 
+              onClick={sendStreamMessage}
+              disabled={!inputText.trim()}
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-primary hover:bg-primary/10 rounded-lg"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

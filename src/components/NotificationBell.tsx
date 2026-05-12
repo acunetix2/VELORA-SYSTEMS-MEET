@@ -69,7 +69,8 @@ export function NotificationBell() {
                     <span
                       className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
                         n.kind === "success" ? "bg-success"
-                          : n.kind === "system" ? "bg-warning"
+                          : n.kind === "warning" ? "bg-warning"
+                          : n.kind === "error" ? "bg-destructive"
                           : n.kind === "meeting" ? "bg-primary"
                           : "bg-muted-foreground"
                       }`}

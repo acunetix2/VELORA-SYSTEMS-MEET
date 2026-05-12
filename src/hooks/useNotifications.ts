@@ -6,9 +6,10 @@ export type Notification = {
   id: string;
   title: string;
   body?: string;
-  kind: "info" | "success" | "meeting";
+  kind: "info" | "success" | "meeting" | "warning" | "error";
   ts: number;
   read: boolean;
+  href?: string;
 };
 
 export function useNotifications() {

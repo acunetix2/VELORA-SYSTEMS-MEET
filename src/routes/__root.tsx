@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 function NotFoundComponent() {
   const { user } = useAuth();
-  const homePath = user ? "/dashboard/home" : "/";
+  const homePath = user ? "/dashboard" : "/";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

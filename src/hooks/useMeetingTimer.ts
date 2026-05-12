@@ -21,7 +21,7 @@ const DEFAULT: TimerState = {
 export function useMeetingTimer(isHost: boolean, channel: React.MutableRefObject<any>) {
   const [state, setState] = useState<TimerState>(DEFAULT);
   const [display, setDisplay] = useState(0); // ms to display
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
 
   // Tick
   useEffect(() => {

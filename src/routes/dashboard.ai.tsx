@@ -32,7 +32,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/ai")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): { conv?: string } => {
     return {
       conv: (search.conv as string) || undefined,
     };
@@ -151,12 +151,12 @@ function AiDashboard() {
           </div>
         </div>
 
-        <div className="min-h-[600px] relative">
+        <div className="flex-1 min-h-[500px] relative">
           {activeTab === "chat" && <VeloraChat />}
           {activeTab === "overview" && (
-            <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="lg:col-span-2 space-y-8">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
                   <StatCard label="time saved" value={`${stats.timeSaved.toFixed(1)}h`} icon={<Clock className="h-3 w-3 text-primary" />} />
                   <StatCard label="insights" value={stats.insights.toString()} icon={<BrainCircuit className="h-3 w-3 text-primary" />} />
                   <StatCard label="automated" value={stats.automated.toString()} icon={<ListChecks className="h-3 w-3 text-primary" />} />
@@ -182,9 +182,9 @@ function AiDashboard() {
                     </div>
                   </div>
                 </section>
-                <div className="grid sm:grid-cols-2 gap-6 pt-2"><StatDetailCard title="Meetings Analyzed" value={stats.meetings} icon={<Users className="h-3.5 w-3.5" />} /><StatDetailCard title="Knowledge Artifacts" value={stats.insights} icon={<Database className="h-3.5 w-3.5" />} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2"><StatDetailCard title="Meetings Analyzed" value={stats.meetings} icon={<Users className="h-3.5 w-3.5" />} /><StatDetailCard title="Knowledge Artifacts" value={stats.insights} icon={<Database className="h-3.5 w-3.5" />} /></div>
               </div>
-              <div className="space-y-6 border-l border-glass-border/20 pl-6">
+              <div className="space-y-6 lg:border-l border-glass-border/20 lg:pl-6 pt-8 lg:pt-0 border-t lg:border-t-0">
                 <div className="space-y-4">
                   <h3 className="font-bold text-[10px] text-muted-foreground flex items-center gap-2"><Zap className="h-3 w-3 text-amber-500" /> Engine status</h3>
                   <div className="space-y-4">
@@ -219,6 +219,10 @@ function VeloraChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) setSidebarCollapsed(true);
+  }, []);
 
   const startSpeechRecognition = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -260,32 +264,13 @@ function VeloraChat() {
       setConversations(data || []);
       if (data && data.length > 0 && !activeConversationId) {
         setActiveConversationId(data[0].id);
-        navigate({ search: { conv: data[0].id } });
+        navigate({ search: { conv: data[0].id } as any });
       }
     };
     
-    const fetchRealStats = async () => {
-      const [meetings, contacts, convs] = await Promise.all([
-        supabase.from("scheduled_meetings" as any).select("*", { count: 'exact', head: true }),
-        supabase.from("contacts" as any).select("*", { count: 'exact', head: true }),
-        supabase.from("ai_conversations" as any).select("*", { count: 'exact', head: true })
-      ]);
-      const mCount = meetings.count || 0;
-      const cCount = contacts.count || 0;
-      const tCount = convs.count || 0;
-      setAnalytics({
-        totalMeetings: mCount,
-        hostCount: Math.max(mCount - 1, 0),
-        participantCount: cCount * 3 + mCount,
-        insightScore: 75 + Math.min(tCount * 2, 20),
-        productivity: 88 + Math.min(mCount, 10),
-      });
-      const baseTrends = [40, 60, 45, 90, 75, 85, 95];
-      setTrends(baseTrends.map(v => Math.min(v + mCount, 100)));
-    };
+
 
     fetchConversations();
-    fetchRealStats();
   }, [user, activeConversationId]);
 
   useEffect(() => {
@@ -329,7 +314,7 @@ function VeloraChat() {
     const { data, error } = await supabase.from("ai_conversations" as any).insert({ user_id: user.id, title: "New Conversation" }).select().single();
     if (error) return toast.error("Failed to create conversation");
     setActiveConversationId(data.id);
-    navigate({ search: { conv: data.id } });
+    navigate({ search: { conv: data.id } as any });
     setMessages([{ role: "assistant", content: "How can I help you today?" }]);
   };
 
@@ -340,7 +325,7 @@ function VeloraChat() {
     setConversations(prev => prev.filter(c => c.id !== id));
     if (activeConversationId === id) {
       setActiveConversationId(null);
-      navigate({ search: { conv: undefined } });
+      navigate({ search: { conv: undefined } as any });
       setMessages([]);
     }
   };
@@ -353,7 +338,7 @@ function VeloraChat() {
       const { data } = await supabase.from("ai_conversations" as any).insert({ user_id: user.id, title: input.trim().slice(0, 30) || "New Chat" }).select().single();
       conversationId = data.id;
       setActiveConversationId(conversationId);
-      navigate({ search: { conv: conversationId } });
+      navigate({ search: { conv: conversationId } as any });
     }
     const userMsg = input.trim();
     const currentImage = selectedImage;
@@ -385,24 +370,31 @@ function VeloraChat() {
   };
 
   return (
-    <div className="flex gap-4 h-[670px] animate-in fade-in slide-in-from-bottom-6 duration-1000 relative">
+    <div className="flex gap-4 h-[calc(100vh-250px)] sm:h-[670px] animate-in fade-in slide-in-from-bottom-6 duration-1000 relative overflow-hidden sm:overflow-visible">
       <Button 
         variant="ghost" 
         size="icon" 
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)} 
         className={cn(
-          "absolute -left-3 top-6 z-50 h-6 w-6 rounded-full border border-glass-border bg-background transition-all hover:bg-primary hover:text-white",
-          sidebarCollapsed ? "left-0" : "-left-3"
+          "absolute left-0 top-6 z-[60] h-6 w-6 rounded-full border border-glass-border bg-background shadow-sm transition-all hover:bg-primary hover:text-white",
+          sidebarCollapsed ? "left-0" : "left-[184px] sm:left-44"
         )}
       >
         {sidebarCollapsed ? <PanelLeft className="h-3 w-3" /> : <PanelLeftClose className="h-3 w-3" />}
       </Button>
 
-      {/* Thinner Sidebar */}
+      {/* Responsive Sidebar */}
       <div className={cn(
-        "flex flex-col overflow-hidden transition-all duration-500 border-r border-glass-border/20",
-        sidebarCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-48 opacity-100"
+        "fixed inset-y-0 left-0 z-50 flex flex-col bg-background/95 backdrop-blur-xl transition-all duration-500 border-r border-glass-border/20 sm:relative sm:z-auto sm:bg-transparent sm:backdrop-blur-none",
+        sidebarCollapsed ? "w-0 -translate-x-full opacity-0 sm:opacity-0" : "w-48 translate-x-0 opacity-100"
       )}>
+        {/* Mobile overlay */}
+        {!sidebarCollapsed && (
+          <div 
+            className="fixed inset-0 bg-black/20 z-[-1] sm:hidden" 
+            onClick={() => setSidebarCollapsed(true)} 
+          />
+        )}
         <div className="p-4 border-b border-glass-border/20 flex justify-center">
           <Button onClick={startNewChat} size="icon" variant="ghost" className="h-9 w-9 hover:bg-primary/5 text-primary rounded-xl transition-all">
             <Plus className="h-5 w-5" />
@@ -413,7 +405,7 @@ function VeloraChat() {
             {conversations.map((conv) => (
               <div key={conv.id} className="relative group">
                 <button 
-                  onClick={() => { setActiveConversationId(conv.id); navigate({ search: { conv: conv.id } }); }} 
+                  onClick={() => { setActiveConversationId(conv.id); navigate({ search: { conv: conv.id } as any }); }} 
                   className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[11px] font-bold transition-all ${activeConversationId === conv.id ? "bg-primary/10 text-primary" : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/30"}`}
                 >
                   <MessageSquare className={`h-3.5 w-3.5 shrink-0 ${activeConversationId === conv.id ? "text-primary" : "text-muted-foreground/20"}`} />
@@ -550,18 +542,18 @@ function VeloraChat() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   placeholder="How can I help you today?"
-                  className="h-14 bg-card/30 border-glass-border rounded-[22px] pl-28 pr-32 focus:ring-primary/20 focus:bg-card/50 transition-all placeholder:text-muted-foreground/40 text-sm shadow-inner text-foreground dark:text-white"
+                  className="h-12 sm:h-14 bg-card/30 border-glass-border rounded-[22px] pl-20 sm:pl-28 pr-24 sm:pr-32 focus:ring-primary/20 focus:bg-card/50 transition-all placeholder:text-muted-foreground/40 text-sm shadow-inner text-foreground dark:text-white"
                 />
-                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <Button type="button" variant="ghost" size="icon" onClick={startSpeechRecognition} className="h-9 w-9 rounded-xl bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition-all">
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 sm:gap-1">
+                  <Button type="button" variant="ghost" size="icon" onClick={startSpeechRecognition} className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-transparent text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5 transition-all">
                     <Mic className="h-4 w-4" />
                   </Button>
-                  <Button type="submit" disabled={(!input.trim() && !selectedImage && !selectedDoc) || loading} className={`h-9 w-9 rounded-xl transition-all duration-300 border-0 font-bold ${
+                  <Button type="submit" disabled={(!input.trim() && !selectedImage && !selectedDoc) || loading} className={`h-8 w-8 sm:h-9 sm:w-9 rounded-xl transition-all duration-300 border-0 font-bold ${
                     input.trim() || selectedImage || selectedDoc
                       ? "bg-primary text-primary-foreground shadow-glow"
                       : "bg-zinc-100 text-zinc-400 dark:bg-white/5 dark:text-zinc-600 cursor-not-allowed"
                   }`}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {loading ? <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" /> : <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                   </Button>
                 </div>
               </div>
@@ -597,11 +589,11 @@ function VeloraLab() {
   useEffect(() => { if (profile) { setPersona(profile.ai_persona || "concierge"); setContext(profile.ai_context || ""); setVoiceEnabled(profile.ai_voice_enabled || false); } }, [profile]);
   const saveSettings = async () => { if (!profile) return; setSaving(true); const { error } = await supabase.from("profiles").update({ ai_persona: persona, ai_context: context, ai_voice_enabled: voiceEnabled }).eq("id", profile.id); if (error) toast.error("Failed to save"); else { toast.success("Settings updated"); refresh(); } setSaving(false); };
   return (
-    <div className="grid lg:grid-cols-2 gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pt-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pt-4 pb-12">
       <div className="space-y-8">
         <section className="space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><Bot className="h-3 w-3" /> Persona</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <PersonaOption active={persona === "concierge"} onClick={() => setPersona("concierge")} title="Concierge" />
             <PersonaOption active={persona === "engineer"} onClick={() => setPersona("engineer")} title="Engineer" />
             <PersonaOption active={persona === "executive"} onClick={() => setPersona("executive")} title="Executive" />

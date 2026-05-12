@@ -309,7 +309,7 @@ function Page() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allVisible.map((c) => {
               const isOwner = classes.some(o => o.id === c.id);
-              const seed = c.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const seed = c.id.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
               const bgClass = colors[seed % colors.length];
 
               const shareLink = (e: React.MouseEvent) => {

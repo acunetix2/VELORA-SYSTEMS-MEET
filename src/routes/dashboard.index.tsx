@@ -225,7 +225,7 @@ function DashboardInner() {
               Manage your organization's security and team collaboration.
             </p>
             <Button asChild className="mt-auto bg-primary hover:opacity-90 text-primary-foreground rounded-xl shadow-glow border-0 font-bold">
-              <Link to="/dashboard/organization">Manage organization <ArrowRight className="h-4 w-4 ml-2" /></Link>
+              <Link to="/dashboard/enterprise">Manage organization <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
 
@@ -273,7 +273,7 @@ function DashboardInner() {
               View meeting summaries, sentiment trends, and Velora task extraction.
             </p>
             <Button asChild className="mt-auto bg-primary hover:opacity-90 text-primary-foreground rounded-xl shadow-glow border-0 font-bold">
-              <Link to="/dashboard/ai">Open command center <ArrowRight className="h-4 w-4 ml-2" /></Link>
+              <Link to="/dashboard/ai" search={{ conv: undefined } as any}>Open command center <ArrowRight className="h-4 w-4 ml-2" /></Link>
             </Button>
           </div>
         </section>

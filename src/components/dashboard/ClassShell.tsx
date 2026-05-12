@@ -26,6 +26,7 @@ const NAV: NavItem[] = [
   { id: "students", label: "Students", icon: Users },
   { id: "resources", label: "Materials", icon: BookOpen },
   { id: "assignments", label: "Assignments", icon: ClipboardList },
+  { id: "syllabus", label: "Syllabus", icon: Activity },
 ];
 
 export function ClassShell({ children, title, actions, className, activeTab, onTabChange }: {

@@ -142,8 +142,8 @@ function Landing() {
         </h1>
 
         <p className="mt-5 text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Velora Meet™ is a focused video conferencing app that respects your time and your privacy.
-          Spin up a room in one click, invite anyone, and stay in control.
+          Velora Meet™ now powers high-stakes collaboration with <span className="text-foreground font-bold">on-call document sharing</span>, <span className="text-foreground font-bold">classroom coordination</span>, and AI-driven intelligence. 
+          Experience seamless, secure meetings with reactions, hand-raising, and private discussions built-in.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -155,6 +155,21 @@ function Landing() {
           <Button asChild variant="ghost" size="lg" className="h-12 px-7 text-base w-full sm:w-auto">
             <Link to={ctaTo} {...(!user ? { search: { mode: "signin" as const } } : {})}>Sign in</Link>
           </Button>
+        </div>
+
+        <div className="mt-12 flex flex-wrap justify-center gap-8 opacity-60">
+          <div className="flex items-center gap-2 text-xs font-bold tracking-tight">
+            <MonitorUp className="h-4 w-4 text-primary" /> On-call sharing
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold tracking-tight">
+            <GraduationCap className="h-4 w-4 text-primary" /> Class coordination
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold tracking-tight">
+            <BrainCircuit className="h-4 w-4 text-primary" /> AI Insights
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold tracking-tight">
+            <Activity className="h-4 w-4 text-primary" /> Live Presence
+          </div>
         </div>
 
         {/* Hero visual */}
@@ -190,7 +205,7 @@ function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         {/* Trusted-by strip */}
         <div className="mb-14 sm:mb-20">
-          <p className="text-center text-xs uppercase tracking-[0.18em] text-primary font-semibold mb-3">
+          <p className="text-center text-xs tracking-tight text-primary font-semibold mb-3">
             Our Global Partners
           </p>
           <h2 className="text-center text-xl sm:text-2xl font-semibold text-foreground/90 mb-10">
@@ -235,7 +250,7 @@ function Landing() {
         </div>
 
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-          <p className="text-xs text-primary uppercase tracking-wider font-semibold">Built for teams that ship</p>
+          <p className="text-xs text-primary tracking-tight font-semibold">Built for teams that ship</p>
           <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">An entire meeting platform — without the bloat.</h2>
           <p className="mt-3 text-muted-foreground">From the boardroom to the back row, every detail engineered for clarity.</p>
         </div>
@@ -271,7 +286,7 @@ function Landing() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10 pointer-events-none" />
           
           <div className="flex-1 space-y-6 relative z-10">
-            <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary border border-primary/30 shadow-glow">
+            <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] font-black tracking-tight text-primary border border-primary/30 shadow-glow">
               <Sparkles className="h-3 w-3" />
               Introducing Velora AI
             </div>
@@ -317,7 +332,7 @@ function Landing() {
       {/* Comparison */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <p className="text-xs text-primary uppercase tracking-wider font-semibold">How we compare</p>
+          <p className="text-xs text-primary tracking-tight font-semibold">How we compare</p>
           <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">Why teams switch to Velora</h2>
         </div>
         <div className="glass rounded-2xl overflow-hidden">
@@ -349,7 +364,7 @@ function Landing() {
       {/* Industries */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <p className="text-xs text-primary uppercase tracking-wider font-semibold">Built for every team</p>
+          <p className="text-xs text-primary tracking-tight font-semibold">Built for every team</p>
           <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">From classrooms to boardrooms</h2>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -390,7 +405,7 @@ function Landing() {
       {/* Testimonials */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <p className="text-xs text-primary uppercase tracking-wider font-semibold">Loved by teams</p>
+          <p className="text-xs text-primary tracking-tight font-semibold">Loved by teams</p>
           <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">What people say</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-4">
@@ -414,7 +429,7 @@ function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-12">
         <div className="glass rounded-2xl p-6 sm:p-8 grid md:grid-cols-[1fr_auto] items-center gap-6">
           <div>
-            <p className="text-xs text-primary uppercase tracking-wider font-semibold">Works with your stack</p>
+            <p className="text-xs text-primary tracking-tight font-semibold">Works with your stack</p>
             <h3 className="mt-1 text-xl sm:text-2xl font-semibold">Drop a meeting link anywhere</h3>
             <p className="text-sm text-muted-foreground mt-2">Calendar invites, Slack messages, email signatures, support tools — share a link and people are in.</p>
           </div>
@@ -431,7 +446,7 @@ function Landing() {
       {/* How it works */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-          <p className="text-xs text-primary uppercase tracking-wider font-semibold">How it works</p>
+          <p className="text-xs text-primary tracking-tight font-semibold">How it works</p>
           <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">Three steps. That's it.</h2>
         </div>
         <div className="grid sm:grid-cols-3 gap-4 sm:gap-5">
@@ -495,7 +510,7 @@ function Landing() {
       <section className="border-t border-glass-border/30 bg-card/10 backdrop-blur-sm py-16">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary mb-2">Our Global Partners</p>
+            <p className="text-[10px] tracking-tight font-bold text-primary mb-2">Our Global Partners</p>
             <h2 className="text-2xl sm:text-3xl font-semibold">Powering collaboration for world-class teams</h2>
           </div>
           <div className="relative overflow-hidden py-4 -mx-4 sm:-mx-6">
@@ -578,7 +593,7 @@ function Landing() {
 
             {/* Links columns */}
             <div>
-              <h4 className="font-semibold text-sm mb-6 uppercase tracking-wider">Product</h4>
+              <h4 className="font-semibold text-sm mb-6 tracking-tight">Product</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li><Link to="/" className="hover:text-primary transition-colors">Features</Link></li>
                 <li><Link to="/academy" className="hover:text-primary transition-colors">Academy</Link></li>
@@ -589,7 +604,7 @@ function Landing() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-sm mb-6 uppercase tracking-wider">Resources</h4>
+              <h4 className="font-semibold text-sm mb-6 tracking-tight">Resources</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
@@ -600,7 +615,7 @@ function Landing() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-sm mb-6 uppercase tracking-wider">Company</h4>
+              <h4 className="font-semibold text-sm mb-6 tracking-tight">Company</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Contact</a></li>

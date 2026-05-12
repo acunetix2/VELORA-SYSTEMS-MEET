@@ -96,7 +96,7 @@ function ProfilePage() {
         github: profile.github ?? "",
         pronouns: profile.pronouns ?? "",
       });
-      setMfaEnabled(!!profile.mfa_enabled);
+      setMfaEnabled(!!(profile as any).mfa_enabled);
     }
   }, [profile, user]);
 
@@ -104,9 +104,9 @@ function ProfilePage() {
     setExtra(next);
   };
 
-  const [analytics, setAnalytics] = useState({ hostCount: 0, participantCount: 0, totalMeetings: 0, history: [] });
+  const [analytics, setAnalytics] = useState<any>({ hostCount: 0, participantCount: 0, totalMeetings: 0, history: [] });
   useEffect(() => {
-    getAnalytics().then(setAnalytics);
+    getAnalytics().then(data => setAnalytics(data as any));
   }, []);
 
   const save = async (e: React.FormEvent) => {

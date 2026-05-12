@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Dialog,
@@ -78,6 +79,7 @@ const REGIONS = [
 ];
 
 function Page() {
+  const { user } = useAuth();
   const { profile } = useProfile();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const [pairCode, setPairCode] = useState<string | null>(null);
@@ -387,7 +389,7 @@ function Page() {
 
         <div className="pt-8 border-t border-glass-border flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
-            Velora Meet v2.4.1 · {profile?.email ?? ""}
+            Velora Meet v2.4.1 · {user?.email ?? ""}
           </div>
           <Button variant="destructive" size="sm" className="rounded-xl h-9 px-4 text-xs font-bold" onClick={clearAll}>
             Reset to Defaults
