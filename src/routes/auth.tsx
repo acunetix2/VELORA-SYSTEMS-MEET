@@ -21,7 +21,7 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — Velora Meet" },
+      { title: "Sign in - Velora Meet" },
       { name: "description", content: "Create your Velora Meet account or sign in to start a meeting." },
     ],
   }),
@@ -80,7 +80,7 @@ function AuthPage() {
           return;
         }
         setStoredName(parsed.data.displayName);
-        toast.success("Account created — welcome to Velora!");
+        toast.success("Account created - welcome to Velora!");
         // auto-confirm is on, so a session is created immediately; the effect above will redirect
       } else {
         const parsed = credSchema.safeParse({ email, password });
@@ -201,8 +201,8 @@ function AuthPage() {
         </div>
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px] uppercase tracking-widest text-primary font-bold mb-6">
-            <span className="h-1 w-1 rounded-full bg-primary shadow-glow animate-ping" /> v2.4 Enterprise Edition
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-[10px]  tracking-widest text-primary font-bold mb-6">
+            <span className=" rounded-full bg-primary shadow-glow" /> Enterprise Edition
           </div>
           <h2 className="font-display text-5xl font-semibold leading-[1.1] tracking-tight text-foreground">
             Where teams <br />
@@ -215,17 +215,17 @@ function AuthPage() {
           <div className="mt-12 grid grid-cols-2 gap-8 border-t border-foreground/10 pt-8">
             <div>
               <p className="text-2xl font-bold text-foreground">100%</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">E2E Encrypted</p>
+              <p className="text-xs text-muted-foreground tracking-wider mt-1">E2E Encrypted</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">&lt;50ms</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Global Latency</p>
+              <p className="text-xs text-muted-foreground tracking-wider mt-1">Awesome latency control</p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between">
-          <p className="text-xs text-muted-foreground italic">Crafted by Velora Systems</p>
+          <p className="text-xs text-muted-foreground italic">A product of Velora Systems</p>
           <div className="flex gap-4">
              <div className="h-1 w-8 rounded-full bg-foreground/20" />
              <div className="h-1 w-4 rounded-full bg-foreground/10" />
@@ -375,7 +375,7 @@ function AuthPage() {
 
           <div className="pt-8 text-center">
             <Link to="/" className="text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 group">
-              <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to landing page
+              <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Home
             </Link>
           </div>
         </div>

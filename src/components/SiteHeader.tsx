@@ -28,7 +28,7 @@ export function SiteHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex bg-primary text-primary-foreground hover:bg-primary/90">
               <Link to="/auth" search={{ mode: "signin" }}>Sign in</Link>
             </Button>
             <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">

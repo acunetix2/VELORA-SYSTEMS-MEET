@@ -63,7 +63,7 @@ function FAQPage() {
           <h3 className="text-xl font-semibold mb-2">Still have questions?</h3>
           <p className="text-sm text-muted-foreground mb-6">We're here to help you get the most out of Velora.</p>
           <a 
-            href="mailto:support@velora.app" 
+            href="mailto:support@velorasystems.com" 
             className="inline-flex items-center justify-center rounded-xl bg-brand-green text-primary-foreground px-6 py-3 font-semibold shadow-brand hover:opacity-90 transition-smooth"
           >
             Contact Support

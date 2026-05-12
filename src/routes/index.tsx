@@ -19,10 +19,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Velora Meet™ — Beautifully simple video meetings" },
-      { name: "description", content: "Crystal-clear video calls with host controls, private rooms, and a one-click waiting room. No installs." },
-      { property: "og:title", content: "Velora Meet™ — Beautifully simple video meetings" },
-      { property: "og:description", content: "Crystal-clear video calls with host controls, private rooms, and a one-click waiting room. No installs." },
+      { title: "Velora Meet™ - HD Video Conferencing" },
+      { name: "description", content: "video calls with host controls, private rooms, and a one-click waiting room. No installs." },
+      { property: "og:title", content: "Velora Meet™ - HD Video Conferencing " },
+      { property: "og:description", content: "video calls with host controls, private rooms, and a one-click waiting room. No installs." },
     ],
   }),
   component: Landing,
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
 
 function AnimatedChatMockup() {
   const [typedText, setTypedText] = useState("");
-  const fullText = "Here are the key points from the discussion:\n• Launch moved to Q3\n• Need 2 more backend engineers\n• API documentation needs review";
+  const fullText = "Here are the key points from the discussion:\n• Machine learnign algorithms\n• Computational Intelligence\n• Deep Learning";
   const [phase, setPhase] = useState<"thinking" | "typing" | "done">("thinking");
 
   useEffect(() => {
@@ -79,14 +79,14 @@ function AnimatedChatMockup() {
           <div className="text-xs font-bold text-foreground flex items-center gap-2">
             Velora AI <span className="flex h-2 w-2 rounded-full bg-brand-green animate-pulse"></span>
           </div>
-          <div className="text-[10px] text-muted-foreground">v1.0.0-Core</div>
+          <div className="text-[10px] text-muted-foreground">Velora Meet</div>
         </div>
       </div>
       <div className="p-4 space-y-5 flex-1 overflow-y-auto">
         {/* User Message */}
         <div className="flex gap-3 flex-row-reverse">
           <div className="h-7 w-7 rounded-md bg-gradient-brand shrink-0 grid place-items-center text-[10px] font-bold text-white shadow-glow">
-            YO
+            You
           </div>
           <div className="bg-primary/20 text-foreground text-xs p-3 rounded-2xl rounded-tr-sm border border-primary/20 shadow-sm max-w-[85%]">
             Can you summarize our discussion?
@@ -133,8 +133,8 @@ function Landing() {
       {/* Hero */}
       <section className="container mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-28 text-center">
         <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs font-medium text-brand-green mb-6 sm:mb-8 border border-brand-green/30">
-          <span className="h-2 w-2 rounded-full bg-brand-green animate-pulse" />
-          <span>Now with reactions, raise hand & private chat</span>
+          
+          <span>Velora Meet™ HD video conferencing</span>
         </div>
 
         <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-semibold leading-[1.05] tracking-tight max-w-4xl mx-auto">
@@ -178,10 +178,10 @@ function Landing() {
           <div className="glass rounded-3xl p-2 sm:p-3 shadow-elegant animate-float">
             <div className="rounded-2xl overflow-hidden bg-card/40 aspect-[16/9] grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 p-2 sm:p-3">
               {[
-                { name: "Maya Chen", initial: "M", gradient: "from-blue-500 to-indigo-500", text: "text-blue-500" },
+                { name: "Maya Chen", initial: "M", gradient: "from-blue-700 to-indigo-500", text: "text-blue-500" },
                 { name: "Diego Rivera", initial: "D", gradient: "from-green-500 to-teal-500", text: "text-green-500" },
-                { name: "Aisha Khan", initial: "A", gradient: "from-amber-500 to-orange-500", text: "text-amber-500" },
-                { name: "You", initial: "Y", gradient: "bg-gradient-primary", text: "text-primary" },
+                { name: "Aisha Khan", initial: "A", gradient: "from-red-600 to-red-500", text: "text-red-500" },
+                { name: "You", initial: "R", gradient: "bg-gradient-primary", text: "text-primary" },
               ].map((p, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden glass">
                   <div className={`absolute inset-0 ${p.gradient.startsWith('bg-') ? p.gradient : `bg-gradient-to-br ${p.gradient}`} opacity-25`} />
@@ -251,7 +251,7 @@ function Landing() {
 
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <p className="text-xs text-primary tracking-tight font-semibold">Built for teams that ship</p>
-          <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">An entire meeting platform — without the bloat.</h2>
+          <h2 className="mt-2 text-2xl sm:text-4xl font-semibold">An entire meeting platform - without the bloat.</h2>
           <p className="mt-3 text-muted-foreground">From the boardroom to the back row, every detail engineered for clarity.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -263,7 +263,7 @@ function Landing() {
             { icon: Users, title: "Waiting room", desc: "Lock private meetings and admit only the right people." },
             { icon: Zap, title: "Instant join", desc: "No installs, no friction. Open the link and you're in." },
             { icon: Captions, title: "Live captions", desc: "On-device speech to text with persistent transcripts." },
-            { icon: Pin, title: "Pin & spotlight", desc: "Focus on the speaker — automatic grid stays balanced." },
+            { icon: Pin, title: "Pin & spotlight", desc: "Focus on the speaker - automatic grid stays balanced." },
             { icon: Activity, title: "Network-aware quality", desc: "Auto low-bandwidth mode keeps calls flowing on flaky Wi-Fi." },
             { icon: KeyRound, title: "Host controls", desc: "Lock rooms, mute everyone, transfer host or end for all." },
             { icon: Calendar, title: "Schedule & invite", desc: "Plan recurring meetings and copy a shareable link." },
@@ -585,8 +585,8 @@ function Landing() {
               </p>
               <div className="flex gap-4">
                 <a href="#" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Twitter className="h-4 w-4" /></a>
-                <a href="#" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Linkedin className="h-4 w-4" /></a>
-                <a href="#" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Github className="h-4 w-4" /></a>
+                <a href="https://www.linkedin.com/in/iddy-chesire-55009b264/" target="_blank" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Linkedin className="h-4 w-4" /></a>
+                <a href="https://github.com/acunetix2/VELORA-SYSTEMS-MEET/" target="_blank" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Github className="h-4 w-4" /></a>
                 <a href="#" className="h-9 w-9 rounded-lg glass grid place-items-center text-muted-foreground hover:text-primary hover:shadow-glow transition-all"><Instagram className="h-4 w-4" /></a>
               </div>
             </div>
@@ -599,7 +599,7 @@ function Landing() {
                 <li><Link to="/academy" className="hover:text-primary transition-colors">Academy</Link></li>
                 <li><Link to="/enterprise" className="hover:text-primary transition-colors">Enterprise</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Live Streaming</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">SDK & API</a></li>
+                <li><a href="/dashboard/developer" className="hover:text-primary transition-colors">SDK & API</a></li>
               </ul>
             </div>
 

@@ -6,10 +6,10 @@ import { ShieldCheck, Github, Linkedin, Mail, Award, Lock, Globe2, ArrowRight } 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — Velora Meet™" },
+      { title: "About - Velora Meet™" },
       { name: "description", content: "Meet the team behind Velora Meet. Founded by security researcher Iddy Chesire to build private, secure video meetings for everyone." },
       { property: "og:title", content: "About Velora Meet™" },
-      { property: "og:description", content: "Founded by security researcher Iddy Chesire — privacy and craft, in equal measure." },
+      { property: "og:description", content: "Founded by security researcher Iddy Chesire - privacy and craft, in equal measure." },
     ],
   }),
   component: AboutPage,
@@ -26,7 +26,7 @@ function AboutPage() {
       <main className="container mx-auto px-4 sm:px-6 py-10 sm:py-14 max-w-6xl">
         {/* Hero */}
         <section className="glass rounded-3xl p-6 sm:p-12 shadow-elegant">
-          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">About Velora Meet™</p>
+          <p className="text-xs tracking-[0.18em] text-primary font-semibold">About Velora Meet™</p>
           <h1 className="mt-3 font-display text-3xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] tracking-tight">
             Privacy & craft, <span className="text-gradient">in equal measure</span>.
           </h1>
@@ -58,14 +58,14 @@ function AboutPage() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <a href="mailto:hello@velora.app" className="glass rounded-md px-3 py-1.5 text-xs inline-flex items-center gap-1.5 hover:bg-card/70">
-                <Mail className="h-3.5 w-3.5 text-primary" /> hello@velora.app
+              <a href="mailto:support@velorasystems.com" className="glass rounded-md px-3 py-1.5 text-xs inline-flex items-center gap-1.5 hover:bg-card/70">
+                <Mail className="h-3.5 w-3.5 text-primary" /> support@velorameet.com
               </a>
               <span className="glass rounded-md px-3 py-1.5 text-xs inline-flex items-center gap-1.5 text-muted-foreground">
-                <Linkedin className="h-3.5 w-3.5" /> /in/iddychesire
+                <Linkedin className="h-3.5 w-3.5" /> /in/iddy-chesire-55009b264/
               </span>
               <span className="glass rounded-md px-3 py-1.5 text-xs inline-flex items-center gap-1.5 text-muted-foreground">
-                <Github className="h-3.5 w-3.5" /> @iddychesire
+                <Github className="h-3.5 w-3.5" /> @acunetix2
               </span>
             </div>
           </div>
@@ -93,19 +93,19 @@ function AboutPage() {
         <section className="mt-10 glass rounded-3xl p-6 sm:p-10 text-center">
           <p className="text-xs uppercase tracking-[0.18em] text-brand-green font-semibold">Our mission</p>
           <h2 className="mt-3 font-display text-2xl sm:text-3xl font-semibold max-w-3xl mx-auto leading-tight">
-            To make secure, private meetings the default — for every team, on every continent.
+            To make secure, private meetings the default - for every team, on every continent.
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-sm sm:text-base">
-            We believe communication tools should serve the people using them — not data brokers, not advertisers,
+            We believe communication tools should serve the people using them - not data brokers, not advertisers,
             not opaque corporate giants. That belief shapes every decision we make.
           </p>
           <Button asChild size="lg" className="mt-7 bg-gradient-brand text-primary-foreground border-0 shadow-brand h-12 px-8">
-            <Link to="/auth" search={{ mode: "signup" as const }}>Join us — start a meeting <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link to="/auth" search={{ mode: "signup" as const }}>Join us - start a meeting <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </section>
 
         <footer className="mt-10 py-6 border-t border-border/40 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Velora Systems · Built with care.
+          © {new Date().getFullYear()} Velora Systems · All rights reserved.
         </footer>
       </main>
     </div>
