@@ -48,7 +48,7 @@ function AuthPage() {
   const [show2fa, setShow2fa] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Already signed in → bounce to redirect target or dashboard
+  // Already signed in. bounce to redirect target or dashboard
   useEffect(() => {
     if (!loading && user) {
       navigate({ to: search.redirect ?? "/dashboard" });
@@ -275,7 +275,7 @@ function AuthPage() {
 
             <div className="relative flex items-center py-4">
               <div className="flex-grow border-t border-glass-border" />
-              <span className="flex-shrink mx-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">Or continue with email</span>
+              <span className="flex-shrink mx-4 text-[10px]  tracking-[0.2em] text-muted-foreground font-bold">Or continue with email</span>
               <div className="flex-grow border-t border-glass-border" />
             </div>
 
@@ -287,7 +287,7 @@ function AuthPage() {
                     id="otp"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
-                    placeholder="123456"
+                    placeholder="000000"
                     className="bg-card/40 border-glass-border h-12 rounded-xl text-center font-mono text-xl tracking-[0.5em] focus:ring-primary/20"
                     maxLength={6}
                     autoFocus
@@ -313,30 +313,30 @@ function AuthPage() {
               <form onSubmit={submit} className="space-y-4">
                 {mode === "signup" && (
                   <div className="space-y-1.5">
-                    <Label htmlFor="dn" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Display Name</Label>
+                    <Label htmlFor="dn" className="text-[11px] tracking-widest text-muted-foreground font-bold ml-1">Full Name</Label>
                     <Input
                       id="dn"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Maya Chen"
+                      placeholder="Dennis Mwangi"
                       className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
                     />
                   </div>
                 )}
                 <div className="space-y-1.5">
-                  <Label htmlFor="em" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Email Address</Label>
+                  <Label htmlFor="em" className="text-[11px] tracking-widest text-muted-foreground font-bold ml-1">Email</Label>
                   <Input
                     id="em"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
+                    placeholder="someone@company.com"
                     className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between ml-1">
-                    <Label htmlFor="pw" className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">Password</Label>
+                    <Label htmlFor="pw" className="text-[11px]  tracking-widest text-muted-foreground font-bold">Password</Label>
                     {mode === "signin" && <button type="button" onClick={resetPassword} className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
                   </div>
                   <Input
@@ -344,7 +344,7 @@ function AuthPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="••••••••••••"
                     className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
                   />
                 </div>
