@@ -178,9 +178,9 @@ function Landing() {
           <div className="glass rounded-3xl p-2 sm:p-3 shadow-elegant animate-float">
             <div className="rounded-2xl overflow-hidden bg-card/40 aspect-[16/9] grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 p-2 sm:p-3">
               {[
-                { name: "Maya Chen", initial: "M", gradient: "from-blue-700 to-indigo-500", text: "text-blue-500" },
-                { name: "Diego Rivera", initial: "D", gradient: "from-green-500 to-teal-500", text: "text-green-500" },
-                { name: "Aisha Khan", initial: "A", gradient: "from-red-600 to-red-500", text: "text-red-500" },
+                { name: "Matthew Kamau", initial: "M", gradient: "from-blue-700 to-indigo-500", text: "text-blue-500" },
+                { name: "Dennis Mwangi", initial: "D", gradient: "from-green-500 to-teal-500", text: "text-green-500" },
+                { name: "Aisha Jumwa", initial: "A", gradient: "from-red-600 to-red-500", text: "text-red-500" },
                 { name: "You", initial: "R", gradient: "bg-gradient-primary", text: "text-primary" },
               ].map((p, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden glass">
