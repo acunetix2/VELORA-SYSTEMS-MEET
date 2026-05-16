@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { setStoredName } from "@/lib/meeting";
 import { toast } from "sonner";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Loader } from "@/components/Loader";
 
 const searchSchema = z.object({
@@ -47,6 +47,7 @@ function AuthPage() {
   const [otpCode, setOtpCode] = useState("");
   const [show2fa, setShow2fa] = useState(false);
   const [busy, setBusy] = useState(false);
+const [showPassword, setShowPassword] = useState(false);
 
   // Already signed in. bounce to redirect target or dashboard
   useEffect(() => {
@@ -334,20 +335,45 @@ function AuthPage() {
                     className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between ml-1">
-                    <Label htmlFor="pw" className="text-[11px]  tracking-widest text-muted-foreground font-bold">Password</Label>
-                    {mode === "signin" && <button type="button" onClick={resetPassword} className="text-[11px] text-primary hover:underline font-bold">Forgot?</button>}
-                  </div>
-                  <Input
-                    id="pw"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20"
-                  />
-                </div>
+             <div className="space-y-1.5">
+			  <div className="flex items-center justify-between ml-1">
+				<Label
+				  htmlFor="pw"
+				  className="text-[11px] tracking-widest text-muted-foreground font-bold"
+				>
+				  Password
+				</Label>
+
+				{mode === "signin" && (
+				  <button
+					type="button"
+					onClick={resetPassword}
+					className="text-[11px] text-primary hover:underline font-bold"
+				  >
+					Forgot?
+				  </button>
+				)}
+			  </div>
+
+			  <div className="relative">
+				<Input
+				  id="pw"
+				  type={showPassword ? "text" : "password"}
+				  value={password}
+				  onChange={(e) => setPassword(e.target.value)}
+				  placeholder="••••••••••••"
+				  className="bg-card/40 border-glass-border h-12 rounded-xl focus:ring-primary/20 pr-10"
+				/>
+
+				<button
+				  type="button"
+				  onClick={() => setShowPassword(!showPassword)}
+				  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+				>
+				  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+				</button>
+			  </div>
+			</div>
 
                 <Button
                   type="submit"
